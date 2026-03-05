@@ -37,7 +37,7 @@ export default function ServiceList({ services }) {
   };
 
   return (
-    <div className="space-y-4 mb-8">
+    <div className="grid grid-cols-2 gap-4 mb-8">
       {services && services.length > 0 ? (
         services.map((service) => (
           <div key={service.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
@@ -70,7 +70,7 @@ export default function ServiceList({ services }) {
           </div>
         ))
       ) : (
-        <div className="bg-white border border-gray-200 rounded-lg p-8 text-center text-gray-500">
+        <div className="col-span-2 bg-white border border-gray-200 rounded-lg p-8 text-center text-gray-500">
           No services available
         </div>
       )}

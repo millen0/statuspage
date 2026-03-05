@@ -6,7 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"net/http"
+	"log"	"net/http"
 	"net/smtp"
 	"os"
 	"statuspage/models"
