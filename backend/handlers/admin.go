@@ -807,3 +807,28 @@ func (h *AdminHandler) ToggleIncidentVisibility(w http.ResponseWriter, r *http.R
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{"id": id, "is_visible": req.IsVisible})
 }
+
+// Settings
+func (h *AdminHandler) UpdateDisplayMode(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		DisplayMode string `json:"display_mode"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if req.DisplayMode != "classic" && req.DisplayMode != "uptime" {
+		http.Error(w, "Invalid display_mode. Must be 'classic' or 'uptime'", http.StatusBadRequest)
+		return
+	}
+
+	_, err := h.DB.Exec("INSERT INTO settings (key, value, updated_at) VALUES ('display_mode', $1, $2) ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = $2", req.DisplayMode, time.Now())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"display_mode": req.DisplayMode})
+}

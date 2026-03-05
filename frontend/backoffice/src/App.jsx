@@ -7,6 +7,7 @@ import Services from './pages/Services';
 import Incidents from './pages/Incidents';
 import Maintenances from './pages/Maintenances';
 import Subscribers from './pages/Subscribers';
+import Settings from './pages/Settings';
 
 export default function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/incidents" element={<ProtectedRoute><Incidents /></ProtectedRoute>} />
         <Route path="/maintenances" element={<ProtectedRoute><Maintenances /></ProtectedRoute>} />
         <Route path="/subscribers" element={<ProtectedRoute><Subscribers /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );

@@ -39,6 +39,7 @@ func main() {
 	r.HandleFunc("/api/public/maintenances", publicHandler.GetMaintenances).Methods("GET")
 	r.HandleFunc("/api/public/subscribe", publicHandler.Subscribe).Methods("POST")
 	r.HandleFunc("/api/public/unsubscribe", publicHandler.Unsubscribe).Methods("GET")
+	r.HandleFunc("/api/public/display-mode", publicHandler.GetDisplayMode).Methods("GET")
 
 	// Area routes (hidden page)
 	r.HandleFunc("/api/area/services", publicHandler.GetAllServices).Methods("GET")
@@ -78,6 +79,8 @@ func main() {
 	admin.HandleFunc("/subscribers", adminHandler.GetSubscribers).Methods("GET")
 	admin.HandleFunc("/subscribers/{id}", adminHandler.DeleteSubscriber).Methods("DELETE")
 	admin.HandleFunc("/subscribers/download", adminHandler.DownloadSubscribers).Methods("GET")
+
+	admin.HandleFunc("/settings/display-mode", adminHandler.UpdateDisplayMode).Methods("PUT")
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},

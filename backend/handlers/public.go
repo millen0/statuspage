@@ -229,3 +229,13 @@ func (h *PublicHandler) ToggleServiceVisibility(w http.ResponseWriter, r *http.R
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{"id": id, "is_visible": req.IsVisible})
 }
+
+func (h *PublicHandler) GetDisplayMode(w http.ResponseWriter, r *http.Request) {
+	var value string
+	err := h.DB.QueryRow("SELECT value FROM settings WHERE key = 'display_mode'").Scan(&value)
+	if err != nil {
+		value = "classic"
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"display_mode": value})
+}
