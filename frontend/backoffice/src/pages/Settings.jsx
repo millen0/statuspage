@@ -15,7 +15,7 @@ export default function Settings() {
 
   const fetchDisplayMode = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/public/display-mode`);
+      const res = await axios.get(`${API_URL}/public/display-mode`);
       setDisplayMode(res.data.display_mode || 'classic');
     } catch (error) {
       console.error('Error fetching display mode:', error);
@@ -29,7 +29,7 @@ export default function Settings() {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `${API_URL}/api/admin/settings/display-mode`,
+        `${API_URL}/admin/settings/display-mode`,
         { display_mode: displayMode },
         { headers: { Authorization: `Bearer ${token}` } }
       );
