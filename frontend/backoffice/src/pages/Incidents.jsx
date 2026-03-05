@@ -82,8 +82,7 @@ export default function Incidents() {
   const handlePublishServiceIncident = async (serviceId) => {
     try {
       await publishServiceIncident(serviceId);
-      fetchIncidents();
-      fetchServices();
+      await fetchServices();
     } catch (error) {
       console.error('Error publishing incident:', error);
       alert('Error publishing incident');
@@ -93,8 +92,7 @@ export default function Incidents() {
   const handleUnpublishServiceIncident = async (serviceId) => {
     try {
       await unpublishServiceIncident(serviceId);
-      fetchIncidents();
-      fetchServices();
+      await fetchServices();
     } catch (error) {
       console.error('Error unpublishing incident:', error);
       alert('Error unpublishing incident');
