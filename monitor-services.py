@@ -21,6 +21,7 @@ SLACK_WEBHOOK = os.getenv('SLACK_WEBHOOK', '')
 
 def send_slack_alert(service_name, old_status, new_status):
     if not SLACK_WEBHOOK:
+        print(f"   ⚠️  SLACK_WEBHOOK not configured")
         return
     
     color = "danger" if new_status == "outage" else "warning"
@@ -38,9 +39,10 @@ def send_slack_alert(service_name, old_status, new_status):
     }
     
     try:
-        requests.post(SLACK_WEBHOOK, json=payload, timeout=5)
-    except:
-        pass
+        resp = requests.post(SLACK_WEBHOOK, json=payload, timeout=5)
+        print(f"   📤 Slack alert sent: {resp.status_code}")
+    except Exception as e:
+        print(f"   ❌ Slack error: {e}")
 
 def check_service(service_id, name, url, timeout):
     try:
