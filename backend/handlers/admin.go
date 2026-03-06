@@ -658,11 +658,12 @@ func (h *AdminHandler) CreateMaintenance(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Enviar alerta ao Slack
-	sendSlackMaintenanceAlert(m, false)
-
-	// Enviar emails para subscribers
-	go sendMaintenanceEmails(h.DB, m)
+	// Enviar alerta ao Slack apenas se for scheduled
+	if m.Status == "scheduled" {
+		sendSlackMaintenanceAlert(m, false)
+		// Enviar emails para subscribers
+		go sendMaintenanceEmails(h.DB, m)
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(m)
