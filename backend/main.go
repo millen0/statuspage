@@ -35,6 +35,7 @@ func main() {
 	// Public routes
 	r.HandleFunc("/api/status-page/heartbeat/app", publicHandler.GetHeartbeat).Methods("GET")
 	r.HandleFunc("/api/public/services", publicHandler.GetServices).Methods("GET")
+	r.HandleFunc("/api/public/services/{id}/uptime", publicHandler.GetServiceUptime).Methods("GET")
 	r.HandleFunc("/api/public/incidents", publicHandler.GetIncidents).Methods("GET")
 	r.HandleFunc("/api/public/maintenances", publicHandler.GetMaintenances).Methods("GET")
 	r.HandleFunc("/api/public/subscribe", publicHandler.Subscribe).Methods("POST")

@@ -239,3 +239,43 @@ func (h *PublicHandler) GetDisplayMode(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"display_mode": value})
 }
+
+func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	serviceID := vars["id"]
+
+	rows, err := h.DB.Query(`
+		SELECT date, status, uptime_percentage 
+		FROM service_uptime_logs 
+		WHERE service_id = $1 
+		AND date >= CURRENT_DATE - INTERVAL '90 days'
+		ORDER BY date ASC
+	`, serviceID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type UptimeDay struct {
+		Date             string  `json:"date"`
+		Status           string  `json:"status"`
+		UptimePercentage float64 `json:"uptime_percentage"`
+	}
+
+	var uptimeDays []UptimeDay
+	for rows.Next() {
+		var day UptimeDay
+		if err := rows.Scan(&day.Date, &day.Status, &day.UptimePercentage); err != nil {
+			continue
+		}
+		uptimeDays = append(uptimeDays, day)
+	}
+
+	if uptimeDays == nil {
+		uptimeDays = []UptimeDay{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(uptimeDays)
+}
