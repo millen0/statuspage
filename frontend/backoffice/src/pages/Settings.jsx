@@ -6,6 +6,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 export default function Settings() {
   const [displayMode, setDisplayMode] = useState('classic');
+  const [gridColumns, setGridColumns] = useState('2');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -17,6 +18,7 @@ export default function Settings() {
     try {
       const res = await axios.get(`${API_URL}/public/display-mode`);
       setDisplayMode(res.data.display_mode || 'classic');
+      setGridColumns(res.data.grid_columns || '2');
     } catch (error) {
       console.error('Error fetching display mode:', error);
     } finally {
@@ -30,7 +32,7 @@ export default function Settings() {
       const token = localStorage.getItem('token');
       await axios.put(
         `${API_URL}/admin/settings/display-mode`,
-        { display_mode: displayMode },
+        { display_mode: displayMode, grid_columns: gridColumns },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       alert('Settings saved successfully!');
@@ -83,6 +85,43 @@ export default function Settings() {
                 <div className="text-sm text-gray-600">Detailed cards with 90-day uptime graph (GitHub-style)</div>
               </div>
             </label>
+          </div>
+
+          <div className="mt-6 pt-6 border-t">
+            <h2 className="text-lg font-semibold mb-4">Grid Layout</h2>
+            <p className="text-gray-600 mb-4">Choose how many columns to display services (applies to uptime mode)</p>
+            
+            <div className="space-y-3">
+              <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="gridColumns"
+                  value="1"
+                  checked={gridColumns === '1'}
+                  onChange={(e) => setGridColumns(e.target.value)}
+                  className="mr-3"
+                />
+                <div>
+                  <div className="font-medium">Single Column</div>
+                  <div className="text-sm text-gray-600">Display one service per row (full width)</div>
+                </div>
+              </label>
+
+              <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="gridColumns"
+                  value="2"
+                  checked={gridColumns === '2'}
+                  onChange={(e) => setGridColumns(e.target.value)}
+                  className="mr-3"
+                />
+                <div>
+                  <div className="font-medium">Two Columns</div>
+                  <div className="text-sm text-gray-600">Display two services per row (side by side)</div>
+                </div>
+              </label>
+            </div>
           </div>
 
           <button

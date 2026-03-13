@@ -231,13 +231,17 @@ func (h *PublicHandler) ToggleServiceVisibility(w http.ResponseWriter, r *http.R
 }
 
 func (h *PublicHandler) GetDisplayMode(w http.ResponseWriter, r *http.Request) {
-	var value string
-	err := h.DB.QueryRow("SELECT value FROM settings WHERE key = 'display_mode'").Scan(&value)
+	var displayMode, gridColumns string
+	err := h.DB.QueryRow("SELECT value FROM settings WHERE key = 'display_mode'").Scan(&displayMode)
 	if err != nil {
-		value = "classic"
+		displayMode = "classic"
+	}
+	err = h.DB.QueryRow("SELECT value FROM settings WHERE key = 'grid_columns'").Scan(&gridColumns)
+	if err != nil {
+		gridColumns = "2"
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"display_mode": value})
+	json.NewEncoder(w).Encode(map[string]string{"display_mode": displayMode, "grid_columns": gridColumns})
 }
 
 func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request) {

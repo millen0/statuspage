@@ -5,6 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 export default function ServiceList({ services }) {
   const [displayMode, setDisplayMode] = useState('classic');
+  const [gridColumns, setGridColumns] = useState('2');
   const [uptimeData, setUptimeData] = useState({});
 
   useEffect(() => {
@@ -12,6 +13,7 @@ export default function ServiceList({ services }) {
       try {
         const res = await axios.get(`${API_URL}/public/display-mode`);
         setDisplayMode(res.data.display_mode || 'classic');
+        setGridColumns(res.data.grid_columns || '2');
       } catch (error) {
         console.error('Error fetching display mode:', error);
       }
@@ -128,7 +130,7 @@ export default function ServiceList({ services }) {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 mb-8">
+    <div className={`grid grid-cols-${gridColumns} gap-4 mb-8`}>
       {services && services.length > 0 ? (
         services.map((service) => (
           <div key={service.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">

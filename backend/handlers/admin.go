@@ -813,6 +813,7 @@ func (h *AdminHandler) ToggleIncidentVisibility(w http.ResponseWriter, r *http.R
 func (h *AdminHandler) UpdateDisplayMode(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		DisplayMode string `json:"display_mode"`
+		GridColumns string `json:"grid_columns"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -824,12 +825,22 @@ func (h *AdminHandler) UpdateDisplayMode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	if req.GridColumns == "" {
+		req.GridColumns = "2"
+	}
+
 	_, err := h.DB.Exec("INSERT INTO settings (key, value, updated_at) VALUES ('display_mode', $1, $2) ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = $2", req.DisplayMode, time.Now())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	_, err = h.DB.Exec("INSERT INTO settings (key, value, updated_at) VALUES ('grid_columns', $1, $2) ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = $2", req.GridColumns, time.Now())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"display_mode": req.DisplayMode})
+	json.NewEncoder(w).Encode(map[string]string{"display_mode": req.DisplayMode, "grid_columns": req.GridColumns})
 }
