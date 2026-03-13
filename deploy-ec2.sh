@@ -14,6 +14,7 @@ git pull
 # Executar migrações do banco
 echo "🗄️ Running database migrations..."
 psql -U postgres -d statuspage -f /opt/statuspage/backend/database/migrations/001_add_incident_fields.sql || echo "Migration already applied or failed"
+psql -U postgres -d statuspage -f /opt/statuspage/backend/database/migration_display_mode.sql || echo "Display mode migration already applied or failed"
 psql -U postgres -d statuspage -f /opt/statuspage/backend/database/migration_uptime_logs.sql || echo "Uptime logs migration already applied or failed"
 
 # Rebuild Backend
