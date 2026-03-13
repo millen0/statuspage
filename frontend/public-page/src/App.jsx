@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import StatusBanner from './components/StatusBanner';
 import ServiceList from './components/ServiceList';
 import IncidentTimeline from './components/IncidentTimeline';
@@ -84,7 +85,12 @@ export default function App() {
       <footer className="border-t border-gray-200 mt-16">
         <div className="max-w-5xl mx-auto px-4 py-8">
           <SubscribeForm />
-          <div className="text-center text-sm text-gray-600 mt-6">
+          <div className="mt-6 text-center">
+            <Link to="/history" className="text-sm text-gray-600 hover:text-gray-900 font-medium">
+              <span style={{ fontFamily: 'arial' }}>←</span> Incident History
+            </Link>
+          </div>
+          <div className="text-center text-sm text-gray-600 mt-4">
             © 2026 Pier Cloud. All rights reserved.
           </div>
         </div>
