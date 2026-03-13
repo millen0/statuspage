@@ -4,14 +4,7 @@ export default function MaintenanceCard({ maintenances }) {
   if (!activeMaintenances || activeMaintenances.length === 0) return null;
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleString('pt-BR', {
-      timeZone: 'America/Sao_Paulo',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return new Date(date).toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
   };
 
   return (

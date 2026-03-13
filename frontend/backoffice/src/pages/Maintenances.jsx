@@ -53,13 +53,8 @@ export default function Maintenances() {
 
   const handleEdit = (maintenance) => {
     setEditingMaintenance(maintenance);
-    // Converter UTC para horário de São Paulo (UTC-3)
     const startDate = new Date(maintenance.scheduled_start);
     const endDate = new Date(maintenance.scheduled_end);
-    
-    // Subtrair 3 horas para ajustar ao timezone de SP
-    startDate.setHours(startDate.getHours() - 3);
-    endDate.setHours(endDate.getHours() - 3);
     
     setFormData({
       ...maintenance,
@@ -127,7 +122,7 @@ export default function Maintenances() {
                 </select>
               </div>
               <div>
-                <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>Scheduled Start</label>
+                <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>Scheduled Start (UTC)</label>
                 <input
                   type="datetime-local"
                   required
@@ -137,7 +132,7 @@ export default function Maintenances() {
                 />
               </div>
               <div>
-                <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>Scheduled End</label>
+                <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>Scheduled End (UTC)</label>
                 <input
                   type="datetime-local"
                   required
@@ -170,8 +165,8 @@ export default function Maintenances() {
                     <h3 className={theme === 'dark' ? 'text-lg font-medium text-white' : 'text-lg font-medium'}>{maintenance.title}</h3>
                     <p className={theme === 'dark' ? 'text-sm text-gray-400' : 'text-sm text-gray-500'}>{maintenance.description}</p>
                     <div className={theme === 'dark' ? 'text-sm text-gray-400 mt-2' : 'text-sm text-gray-600 mt-2'}>
-                      <div>Start: {new Date(maintenance.scheduled_start).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</div>
-                      <div>End: {new Date(maintenance.scheduled_end).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</div>
+                      <div>Start: {new Date(maintenance.scheduled_start).toISOString().replace('T', ' ').slice(0, 19)} UTC</div>
+                      <div>End: {new Date(maintenance.scheduled_end).toISOString().replace('T', ' ').slice(0, 19)} UTC</div>
                     </div>
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-2">
                       {maintenance.status}
