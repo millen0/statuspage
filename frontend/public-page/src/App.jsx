@@ -85,9 +85,12 @@ export default function App() {
       <footer className="border-t border-gray-200 mt-16">
         <div className="max-w-5xl mx-auto px-4 py-8">
           <SubscribeForm />
-          <div className="mt-6 text-center">
-            <Link to="/history" className="text-sm text-gray-600 hover:text-gray-900 font-medium">
+          <div className="mt-6 text-center flex justify-center gap-6">
+            <Link to="/history" className="text-sm text-red-600 hover:text-red-800 font-medium">
               <span style={{ fontFamily: 'arial' }}>←</span> Incident History
+            </Link>
+            <Link to="/maintenance-history" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+              <span style={{ fontFamily: 'arial' }}>←</span> Maintenance History
             </Link>
           </div>
           <div className="text-center text-sm text-gray-600 mt-4">
