@@ -32,32 +32,38 @@ def send_maintenance_email(maintenance, subscribers):
         print("❌ SMTP not configured")
         return False
     
-    subject = f"Scheduled Maintenance: {maintenance['title']}"
+    subject = f"Informe Plataforma Pier Cloud: Manutenção Programada"
+    
+    # Carregar template
+    template_path = 'templates/email_maintenance_template.html'
+    if not os.path.exists(template_path):
+        template_path = '/opt/statuspage/templates/email_maintenance_template.html'
+    
+    try:
+        with open(template_path, 'r', encoding='utf-8') as f:
+            template = f.read()
+    except Exception as e:
+        print(f"❌ Error loading template: {e}")
+        return False
+    
+    # Conteúdo personalizado da manutenção
+    maintenance_content = f"""<p style="line-height: inherit; margin: 0px;">
+        <strong>Prezados clientes e parceiros,</strong><br><br>
+        A Pier Cloud informa que realizará uma <strong>manutenção programada</strong> conforme detalhes abaixo:<br><br>
+        <strong>{maintenance['title']}</strong><br><br>
+        {maintenance['description']}<br><br>
+        <strong>Início (São Paulo):</strong> {maintenance['start_sp']}<br>
+        <strong>Término (São Paulo):</strong> {maintenance['end_sp']}<br><br>
+        Para mais informações, acesse: <a href="https://statuspage.piercloud.io/area/maintenances" style="color: rgb(0, 104, 165);">https://statuspage.piercloud.io/area/maintenances</a>
+    </p>"""
     
     sent_count = 0
     for sub in subscribers:
         email = sub['email']
         token = sub['token']
         
-        unsubscribe_url = f"https://statuspage.piercloud.io/api/public/unsubscribe?token={token}"
-        
-        html_body = f"""<html>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #2563eb;">Scheduled Maintenance Notification</h2>
-        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <h3 style="margin-top: 0;">{maintenance['title']}</h3>
-            <p>{maintenance['description']}</p>
-            <p><strong>Start (São Paulo):</strong> {maintenance['start_sp']}</p>
-            <p><strong>End (São Paulo):</strong> {maintenance['end_sp']}</p>
-        </div>
-        <p style="color: #666; font-size: 12px; margin-top: 30px;">
-            You are receiving this email because you subscribed to maintenance notifications.<br>
-            <a href="{unsubscribe_url}" style="color: #999; text-decoration: none;">Unsubscribe from notifications</a>
-        </p>
-    </div>
-</body>
-</html>"""
+        # Substituir conteúdo no template
+        html_body = template.replace('{{MAINTENANCE_CONTENT}}', maintenance_content)
         
         try:
             context = ssl.create_default_context()

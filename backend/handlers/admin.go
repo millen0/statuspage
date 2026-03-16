@@ -31,6 +31,19 @@ func sendMaintenanceEmails(db *sql.DB, maintenance models.Maintenance) {
 		return
 	}
 
+	// Carregar template
+	templatePath := "templates/email_maintenance_template.html"
+	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
+		templatePath = "/opt/statuspage/templates/email_maintenance_template.html"
+	}
+	
+	templateBytes, err := os.ReadFile(templatePath)
+	if err != nil {
+		log.Printf("[EMAIL] Error loading template: %v", err)
+		return
+	}
+	template := string(templateBytes)
+
 	rows, err := db.Query("SELECT email, unsubscribe_token FROM subscribers WHERE is_active = true")
 	if err != nil {
 		log.Printf("[EMAIL] Error querying subscribers: %v", err)
@@ -41,7 +54,18 @@ func sendMaintenanceEmails(db *sql.DB, maintenance models.Maintenance) {
 	startSP := maintenance.ScheduledStart.Add(-3 * time.Hour)
 	endSP := maintenance.ScheduledEnd.Add(-3 * time.Hour)
 
-	subject := fmt.Sprintf("Scheduled Maintenance: %s", maintenance.Title)
+	subject := "Informe Plataforma Pier Cloud: Manutenção Programada"
+
+	// Conteúdo personalizado da manutenção
+	maintenanceContent := fmt.Sprintf(`<p style="line-height: inherit; margin: 0px;">
+		<strong>Prezados clientes e parceiros,</strong><br><br>
+		A Pier Cloud informa que realizará uma <strong>manutenção programada</strong> conforme detalhes abaixo:<br><br>
+		<strong>%s</strong><br><br>
+		%s<br><br>
+		<strong>Início (São Paulo):</strong> %s<br>
+		<strong>Término (São Paulo):</strong> %s<br><br>
+		Para mais informações, acesse: <a href="https://statuspage.piercloud.io/area/maintenances" style="color: rgb(0, 104, 165);">https://statuspage.piercloud.io/area/maintenances</a>
+	</p>`, maintenance.Title, maintenance.Description, startSP.Format("02/01/2006 15:04"), endSP.Format("02/01/2006 15:04"))
 
 	auth := smtp.PlainAuth("", smtpUser, smtpPass, smtpHost)
 	
@@ -53,26 +77,10 @@ func sendMaintenanceEmails(db *sql.DB, maintenance models.Maintenance) {
 			continue
 		}
 
-		unsubscribeURL := fmt.Sprintf("https://statuspage.piercloud.io/api/public/unsubscribe?token=%s", token)
-		htmlBody := fmt.Sprintf(`<html>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-	<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-		<h2 style="color: #2563eb;">Scheduled Maintenance Notification</h2>
-		<div style="background-color: #f3f4f6; padding: 15px; border-radius: 5px; margin: 20px 0;">
-			<h3 style="margin-top: 0;">%s</h3>
-			<p>%s</p>
-			<p><strong>Start (São Paulo):</strong> %s</p>
-			<p><strong>End (São Paulo):</strong> %s</p>
-		</div>
-		<p style="color: #666; font-size: 12px; margin-top: 30px;">
-			You are receiving this email because you subscribed to maintenance notifications.<br>
-			<a href="%s" style="color: #999; text-decoration: none;">Unsubscribe from notifications</a>
-		</p>
-	</div>
-</body>
-</html>`, maintenance.Title, maintenance.Description, startSP.Format("02/01/2006 15:04"), endSP.Format("02/01/2006 15:04"), unsubscribeURL)
+		// Substituir conteúdo no template
+		htmlBody := bytes.ReplaceAll([]byte(template), []byte("{{MAINTENANCE_CONTENT}}"), []byte(maintenanceContent))
 		msg := []byte(fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n%s",
-			fromEmail, email, subject, htmlBody))
+			fromEmail, email, subject, string(htmlBody)))
 
 		conn, err := smtp.Dial(smtpHost + ":" + smtpPort)
 		if err != nil {
