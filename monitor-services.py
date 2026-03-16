@@ -44,16 +44,30 @@ def send_slack_alert(service_name, old_status, new_status):
     except Exception as e:
         print(f"   ❌ Slack error: {e}")
 
-def check_service(service_id, name, url, timeout):
+def check_service_with_codes(service_id, name, url, timeout, accepted_codes):
     try:
         response = requests.get(url, timeout=timeout, allow_redirects=True)
-        if response.status_code >= 500:
-            return 'outage'
-        elif response.status_code >= 300 and response.status_code < 400:
-            return 'degraded'
+        status_code = response.status_code
+        
+        # Se tem accepted_codes configurado, usar ele
+        if accepted_codes and '400-499' in accepted_codes:
+            # Aceita 2xx e 4xx
+            if (200 <= status_code <= 299) or (400 <= status_code <= 499):
+                return 'operational'
+            elif status_code >= 500:
+                return 'outage'
+            else:
+                return 'degraded'
         else:
-            # 200-299 ou 400-499
-            return 'operational'
+            # Padrão: apenas 2xx é operational
+            if status_code >= 500:
+                return 'outage'
+            elif status_code >= 300 and status_code < 400:
+                return 'degraded'
+            elif 200 <= status_code <= 299:
+                return 'operational'
+            else:
+                return 'degraded'
     except requests.exceptions.Timeout:
         return 'degraded'
     except:
@@ -95,17 +109,17 @@ def monitor_services():
     
     # Buscar services com URL
     cur.execute("""
-        SELECT id, name, url, status, request_timeout 
+        SELECT id, name, url, status, request_timeout, accepted_status_codes 
         FROM services 
         WHERE url IS NOT NULL AND url != ''
     """)
     
     for row in cur.fetchall():
-        service_id, name, url, current_status, timeout = row
+        service_id, name, url, current_status, timeout, accepted_codes = row
         timeout = timeout if timeout else 10
         
         # Verificar status
-        new_status = check_service(service_id, name, url, timeout)
+        new_status = check_service_with_codes(service_id, name, url, timeout, accepted_codes)
         
         # Se mudou, atualizar
         if new_status != current_status:
