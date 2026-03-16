@@ -615,7 +615,7 @@ func (h *AdminHandler) AddIncidentUpdate(w http.ResponseWriter, r *http.Request)
 func (h *AdminHandler) GetMaintenances(w http.ResponseWriter, r *http.Request) {
 	rows, err := h.DB.Query(`
 		SELECT id, title, description, status, scheduled_start, scheduled_end, actual_start, actual_end, 
-		       COALESCE(send_email, false), COALESCE(email_sent, false), created_at, updated_at 
+		       COALESCE(send_email, false), COALESCE(email_sent, false), email_scheduled_time, created_at, updated_at 
 		FROM maintenances 
 		ORDER BY created_at DESC
 	`)
@@ -628,7 +628,7 @@ func (h *AdminHandler) GetMaintenances(w http.ResponseWriter, r *http.Request) {
 	var maintenances []models.Maintenance
 	for rows.Next() {
 		var m models.Maintenance
-		if err := rows.Scan(&m.ID, &m.Title, &m.Description, &m.Status, &m.ScheduledStart, &m.ScheduledEnd, &m.ActualStart, &m.ActualEnd, &m.SendEmail, &m.EmailSent, &m.CreatedAt, &m.UpdatedAt); err != nil {
+		if err := rows.Scan(&m.ID, &m.Title, &m.Description, &m.Status, &m.ScheduledStart, &m.ScheduledEnd, &m.ActualStart, &m.ActualEnd, &m.SendEmail, &m.EmailSent, &m.EmailScheduledTime, &m.CreatedAt, &m.UpdatedAt); err != nil {
 			continue
 		}
 		maintenances = append(maintenances, m)
@@ -650,8 +650,8 @@ func (h *AdminHandler) CreateMaintenance(w http.ResponseWriter, r *http.Request)
 	}
 
 	err := h.DB.QueryRow(
-		"INSERT INTO maintenances (title, description, status, scheduled_start, scheduled_end, send_email, email_sent) VALUES ($1, $2, $3, $4, $5, $6, false) RETURNING id, created_at, updated_at",
-		m.Title, m.Description, m.Status, m.ScheduledStart, m.ScheduledEnd, m.SendEmail,
+		"INSERT INTO maintenances (title, description, status, scheduled_start, scheduled_end, send_email, email_sent, email_scheduled_time) VALUES ($1, $2, $3, $4, $5, $6, false, $7) RETURNING id, created_at, updated_at",
+		m.Title, m.Description, m.Status, m.ScheduledStart, m.ScheduledEnd, m.SendEmail, m.EmailScheduledTime,
 	).Scan(&m.ID, &m.CreatedAt, &m.UpdatedAt)
 
 	if err != nil {
@@ -664,14 +664,17 @@ func (h *AdminHandler) CreateMaintenance(w http.ResponseWriter, r *http.Request)
 		sendSlackMaintenanceAlert(m, false)
 	}
 
-	// Enviar emails apenas se send_email = true e ainda não foi enviado
+	// Enviar emails apenas se send_email = true, ainda não foi enviado E horário chegou
 	if m.SendEmail && !m.EmailSent {
-		go func() {
-			sendMaintenanceEmails(h.DB, m)
-			// Marcar como enviado
-			h.DB.Exec("UPDATE maintenances SET email_sent = true WHERE id = $1", m.ID)
-		}()
-		m.EmailSent = true
+		if m.EmailScheduledTime == nil || time.Now().After(*m.EmailScheduledTime) {
+			// Enviar imediatamente
+			go func() {
+				sendMaintenanceEmails(h.DB, m)
+				h.DB.Exec("UPDATE maintenances SET email_sent = true WHERE id = $1", m.ID)
+			}()
+			m.EmailSent = true
+		}
+		// Senão, será enviado pelo cron job
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -694,8 +697,8 @@ func (h *AdminHandler) UpdateMaintenance(w http.ResponseWriter, r *http.Request)
 	h.DB.QueryRow("SELECT status, COALESCE(email_sent, false) FROM maintenances WHERE id = $1", id).Scan(&oldStatus, &emailSent)
 
 	_, err := h.DB.Exec(
-		"UPDATE maintenances SET title=$1, description=$2, status=$3, scheduled_start=$4, scheduled_end=$5, send_email=$6, updated_at=$7 WHERE id=$8",
-		m.Title, m.Description, m.Status, m.ScheduledStart, m.ScheduledEnd, m.SendEmail, time.Now(), id,
+		"UPDATE maintenances SET title=$1, description=$2, status=$3, scheduled_start=$4, scheduled_end=$5, send_email=$6, email_scheduled_time=$7, updated_at=$8 WHERE id=$9",
+		m.Title, m.Description, m.Status, m.ScheduledStart, m.ScheduledEnd, m.SendEmail, m.EmailScheduledTime, time.Now(), id,
 	)
 
 	if err != nil {
@@ -703,13 +706,15 @@ func (h *AdminHandler) UpdateMaintenance(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Enviar email se marcado e ainda não foi enviado
+	// Enviar email se marcado, ainda não foi enviado E horário chegou
 	if m.SendEmail && !emailSent {
-		go func() {
-			sendMaintenanceEmails(h.DB, m)
-			h.DB.Exec("UPDATE maintenances SET email_sent = true WHERE id = $1", id)
-		}()
-		m.EmailSent = true
+		if m.EmailScheduledTime == nil || time.Now().After(*m.EmailScheduledTime) {
+			go func() {
+				sendMaintenanceEmails(h.DB, m)
+				h.DB.Exec("UPDATE maintenances SET email_sent = true WHERE id = $1", id)
+			}()
+			m.EmailSent = true
+		}
 	} else {
 		m.EmailSent = emailSent
 	}

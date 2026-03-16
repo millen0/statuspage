@@ -49,19 +49,20 @@ type IncidentUpdate struct {
 }
 
 type Maintenance struct {
-	ID             int        `json:"id"`
-	Title          string     `json:"title"`
-	Description    string     `json:"description"`
-	Status         string     `json:"status"`
-	ScheduledStart time.Time  `json:"scheduled_start"`
-	ScheduledEnd   time.Time  `json:"scheduled_end"`
-	ActualStart    *time.Time `json:"actual_start"`
-	ActualEnd      *time.Time `json:"actual_end"`
-	SendEmail      bool       `json:"send_email"`
-	EmailSent      bool       `json:"email_sent"`
-	CreatedAt      time.Time  `json:"created_at"`
-	UpdatedAt      time.Time  `json:"updated_at"`
-	Services       []int      `json:"services,omitempty"`
+	ID                 int        `json:"id"`
+	Title              string     `json:"title"`
+	Description        string     `json:"description"`
+	Status             string     `json:"status"`
+	ScheduledStart     time.Time  `json:"scheduled_start"`
+	ScheduledEnd       time.Time  `json:"scheduled_end"`
+	ActualStart        *time.Time `json:"actual_start"`
+	ActualEnd          *time.Time `json:"actual_end"`
+	SendEmail          bool       `json:"send_email"`
+	EmailSent          bool       `json:"email_sent"`
+	EmailScheduledTime *time.Time `json:"email_scheduled_time"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
+	Services           []int      `json:"services,omitempty"`
 }
 
 type Monitor struct {

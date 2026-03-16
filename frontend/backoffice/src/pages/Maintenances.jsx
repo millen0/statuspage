@@ -15,6 +15,7 @@ export default function Maintenances() {
     scheduled_start: '',
     scheduled_end: '',
     send_email: false,
+    email_scheduled_time: '',
   });
 
   useEffect(() => {
@@ -37,7 +38,8 @@ export default function Maintenances() {
       const payload = {
         ...formData,
         scheduled_start: new Date(formData.scheduled_start).toISOString(),
-        scheduled_end: new Date(formData.scheduled_end).toISOString()
+        scheduled_end: new Date(formData.scheduled_end).toISOString(),
+        email_scheduled_time: formData.email_scheduled_time ? new Date(formData.email_scheduled_time).toISOString() : null
       };
       
       if (editingMaintenance) {
@@ -56,12 +58,14 @@ export default function Maintenances() {
     setEditingMaintenance(maintenance);
     const startDate = new Date(maintenance.scheduled_start);
     const endDate = new Date(maintenance.scheduled_end);
+    const emailTime = maintenance.email_scheduled_time ? new Date(maintenance.email_scheduled_time) : null;
     
     setFormData({
       ...maintenance,
       scheduled_start: startDate.toISOString().slice(0, 16),
       scheduled_end: endDate.toISOString().slice(0, 16),
       send_email: maintenance.send_email || false,
+      email_scheduled_time: emailTime ? emailTime.toISOString().slice(0, 16) : '',
     });
     setShowForm(true);
   };
@@ -69,7 +73,7 @@ export default function Maintenances() {
 
 
   const resetForm = () => {
-    setFormData({ title: '', description: '', status: 'scheduled', scheduled_start: '', scheduled_end: '', send_email: false });
+    setFormData({ title: '', description: '', status: 'scheduled', scheduled_start: '', scheduled_end: '', send_email: false, email_scheduled_time: '' });
     setEditingMaintenance(null);
     setShowForm(false);
   };
@@ -155,6 +159,22 @@ export default function Maintenances() {
                   Send email notification to subscribers
                 </label>
               </div>
+              {formData.send_email && (
+                <div>
+                  <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>
+                    Email Send Time (UTC) - Leave empty to send immediately
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={formData.email_scheduled_time}
+                    onChange={(e) => setFormData({ ...formData, email_scheduled_time: e.target.value })}
+                    className={theme === 'dark' ? 'mt-1 block w-full bg-[#0d1117] border border-[#30363d] rounded-md shadow-sm py-2 px-3 text-white' : 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3'}
+                  />
+                  <p className={theme === 'dark' ? 'mt-1 text-xs text-gray-400' : 'mt-1 text-xs text-gray-500'}>
+                    If empty, email will be sent immediately when you save
+                  </p>
+                </div>
+              )}
               <button
                 type="submit"
                 className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
