@@ -57,6 +57,8 @@ type Maintenance struct {
 	ScheduledEnd   time.Time  `json:"scheduled_end"`
 	ActualStart    *time.Time `json:"actual_start"`
 	ActualEnd      *time.Time `json:"actual_end"`
+	SendEmail      bool       `json:"send_email"`
+	EmailSent      bool       `json:"email_sent"`
 	CreatedAt      time.Time  `json:"created_at"`
 	UpdatedAt      time.Time  `json:"updated_at"`
 	Services       []int      `json:"services,omitempty"`

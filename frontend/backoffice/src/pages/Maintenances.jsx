@@ -14,6 +14,7 @@ export default function Maintenances() {
     status: 'scheduled',
     scheduled_start: '',
     scheduled_end: '',
+    send_email: false,
   });
 
   useEffect(() => {
@@ -60,6 +61,7 @@ export default function Maintenances() {
       ...maintenance,
       scheduled_start: startDate.toISOString().slice(0, 16),
       scheduled_end: endDate.toISOString().slice(0, 16),
+      send_email: maintenance.send_email || false,
     });
     setShowForm(true);
   };
@@ -67,7 +69,7 @@ export default function Maintenances() {
 
 
   const resetForm = () => {
-    setFormData({ title: '', description: '', status: 'scheduled', scheduled_start: '', scheduled_end: '' });
+    setFormData({ title: '', description: '', status: 'scheduled', scheduled_start: '', scheduled_end: '', send_email: false });
     setEditingMaintenance(null);
     setShowForm(false);
   };
@@ -141,6 +143,18 @@ export default function Maintenances() {
                   className={theme === 'dark' ? 'mt-1 block w-full bg-[#0d1117] border border-[#30363d] rounded-md shadow-sm py-2 px-3 text-white' : 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3'}
                 />
               </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="send_email"
+                  checked={formData.send_email}
+                  onChange={(e) => setFormData({ ...formData, send_email: e.target.checked })}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label htmlFor="send_email" className={theme === 'dark' ? 'ml-2 block text-sm text-gray-300' : 'ml-2 block text-sm text-gray-700'}>
+                  Send email notification to subscribers
+                </label>
+              </div>
               <button
                 type="submit"
                 className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
@@ -171,6 +185,11 @@ export default function Maintenances() {
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-2">
                       {maintenance.status}
                     </span>
+                    {maintenance.email_sent && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-2 ml-2">
+                        ✉️ Email Sent
+                      </span>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <button
