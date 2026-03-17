@@ -87,8 +87,10 @@ export default function ServiceList({ services }) {
     const serviceIncidents = incidentsData[serviceId] || {};
     const bars = [];
     
-    // Gerar últimos 90 dias
+    // Gerar últimos 90 dias (do mais antigo para o mais recente)
     const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalizar para meia-noite
+    
     for (let i = 89; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
@@ -107,14 +109,17 @@ export default function ServiceList({ services }) {
         status = 'degraded';
       }
       
+      const isFirstDay = i === 89;
+      const isLastDay = i === 0;
+      
       bars.push(
         <UptimeTooltip
-          key={i}
+          key={`${serviceId}-${dateStr}`}
           date={dateStr}
           uptimePercentage={uptimePercentage}
           incidents={dayIncidents}
         >
-          <div className={`h-8 ${statusColors[status]} ${i === 89 ? 'rounded-l' : ''} ${i === 0 ? 'rounded-r' : ''} cursor-pointer hover:opacity-80 transition-opacity`} />
+          <div className={`h-8 ${statusColors[status]} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} cursor-pointer hover:opacity-80 transition-opacity`} />
         </UptimeTooltip>
       );
     }
