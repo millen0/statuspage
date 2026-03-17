@@ -249,11 +249,11 @@ func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request)
 	serviceID := vars["id"]
 
 	rows, err := h.DB.Query(`
-		SELECT date, status, uptime_percentage 
-		FROM service_uptime_logs 
-		WHERE service_id = $1 
-		AND date >= CURRENT_DATE - INTERVAL '90 days'
-		ORDER BY date ASC
+		SELECT sul.date, sul.status, sul.uptime_percentage
+		FROM service_uptime_logs sul
+		WHERE sul.service_id = $1 
+		AND sul.date >= CURRENT_DATE - INTERVAL '90 days'
+		ORDER BY sul.date ASC
 	`, serviceID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -261,10 +261,18 @@ func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request)
 	}
 	defer rows.Close()
 
+	type IncidentInfo struct {
+		Title       string `json:"title"`
+		Description string `json:"description"`
+		Severity    string `json:"severity"`
+		Duration    int    `json:"duration_minutes"`
+	}
+
 	type UptimeDay struct {
-		Date             string  `json:"date"`
-		Status           string  `json:"status"`
-		UptimePercentage float64 `json:"uptime_percentage"`
+		Date             string         `json:"date"`
+		Status           string         `json:"status"`
+		UptimePercentage float64        `json:"uptime_percentage"`
+		Incidents        []IncidentInfo `json:"incidents"`
 	}
 
 	var uptimeDays []UptimeDay
@@ -273,6 +281,30 @@ func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request)
 		if err := rows.Scan(&day.Date, &day.Status, &day.UptimePercentage); err != nil {
 			continue
 		}
+
+		// Buscar incidentes deste dia para este serviço
+		incidentRows, _ := h.DB.Query(`
+			SELECT i.title, i.description, i.severity,
+				EXTRACT(EPOCH FROM (COALESCE(i.resolved_at, NOW()) - i.created_at))/60 as duration_minutes
+			FROM incidents i
+			WHERE i.service_id = $1
+			AND DATE(i.created_at) = $2
+			AND i.is_visible = true
+			ORDER BY i.created_at DESC
+		`, serviceID, day.Date)
+
+		for incidentRows.Next() {
+			var incident IncidentInfo
+			if err := incidentRows.Scan(&incident.Title, &incident.Description, &incident.Severity, &incident.Duration); err == nil {
+				day.Incidents = append(day.Incidents, incident)
+			}
+		}
+		incidentRows.Close()
+
+		if day.Incidents == nil {
+			day.Incidents = []IncidentInfo{}
+		}
+
 		uptimeDays = append(uptimeDays, day)
 	}
 
