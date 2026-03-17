@@ -114,9 +114,7 @@ export default function ServiceList({ services }) {
           uptimePercentage={uptimePercentage}
           incidents={dayIncidents}
         >
-          <div
-            className={`h-8 flex-1 ${statusColors[status]} ${i === 89 ? 'rounded-l' : ''} ${i === 0 ? 'rounded-r' : ''} cursor-pointer hover:opacity-80 transition-opacity`}
-          />
+          <div className={`h-8 ${statusColors[status]} ${i === 89 ? 'rounded-l' : ''} ${i === 0 ? 'rounded-r' : ''} cursor-pointer hover:opacity-80 transition-opacity`} />
         </UptimeTooltip>
       );
     }
