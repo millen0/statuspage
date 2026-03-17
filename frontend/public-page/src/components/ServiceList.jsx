@@ -60,6 +60,19 @@ export default function ServiceList({ services }) {
     maintenance: 'Under Maintenance'
   };
 
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+  };
+
+  const getStatusLabel = (uptimePercentage) => {
+    if (uptimePercentage >= 99.9) return 'No downtime';
+    if (uptimePercentage >= 99) return 'Minor issues';
+    if (uptimePercentage >= 95) return 'Partial outage';
+    return 'Major outage';
+  };
+
   const generateUptimeBars = (serviceId) => {
     const uptimeLogs = uptimeData[serviceId] || [];
     const bars = [];
@@ -75,19 +88,21 @@ export default function ServiceList({ services }) {
       const log = uptimeLogs.find(l => l.date.startsWith(dateStr));
       
       let status = 'operational';
-      if (log) {
-        if (log.uptime_percentage < 50) {
-          status = 'outage';
-        } else if (log.uptime_percentage < 99) {
-          status = 'degraded';
-        }
+      const uptimePercentage = log ? log.uptime_percentage : 100;
+      
+      if (uptimePercentage < 50) {
+        status = 'outage';
+      } else if (uptimePercentage < 99) {
+        status = 'degraded';
       }
+      
+      const tooltipText = `${formatDate(dateStr)}\n${uptimePercentage.toFixed(2)}% uptime\n${getStatusLabel(uptimePercentage)}`;
       
       bars.push(
         <div
           key={i}
-          className={`h-8 flex-1 ${statusColors[status]} ${i === 89 ? 'rounded-l' : ''} ${i === 0 ? 'rounded-r' : ''}`}
-          title={`${dateStr}: ${log ? log.uptime_percentage.toFixed(2) : '100.00'}% uptime`}
+          className={`h-8 flex-1 ${statusColors[status]} ${i === 89 ? 'rounded-l' : ''} ${i === 0 ? 'rounded-r' : ''} cursor-pointer hover:opacity-80 transition-opacity`}
+          title={tooltipText}
         />
       );
     }
