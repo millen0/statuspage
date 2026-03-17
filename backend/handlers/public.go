@@ -283,3 +283,161 @@ func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(uptimeDays)
 }
+
+// GetServiceGroups returns all active service groups with their aggregated status
+func (h *PublicHandler) GetServiceGroups(w http.ResponseWriter, r *http.Request) {
+	rows, err := h.DB.Query(`
+		SELECT sg.id, sg.name, sg.display_name, sg.description
+		FROM service_groups sg
+		WHERE sg.is_active = true
+		ORDER BY sg.display_name
+	`)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type ServiceGroup struct {
+		ID          int    `json:"id"`
+		Name        string `json:"name"`
+		DisplayName string `json:"display_name"`
+		Description string `json:"description"`
+		Status      string `json:"status"`
+	}
+
+	var groups []ServiceGroup
+	for rows.Next() {
+		var g ServiceGroup
+		if err := rows.Scan(&g.ID, &g.Name, &g.DisplayName, &g.Description); err != nil {
+			continue
+		}
+
+		// Calculate current status based on member services
+		var worstStatus string
+		err := h.DB.QueryRow(`
+			SELECT 
+				CASE 
+					WHEN COUNT(CASE WHEN s.status = 'outage' THEN 1 END) > 0 THEN 'outage'
+					WHEN COUNT(CASE WHEN s.status = 'degraded' THEN 1 END) > 0 THEN 'degraded'
+					WHEN COUNT(CASE WHEN s.status = 'maintenance' THEN 1 END) > 0 THEN 'maintenance'
+					ELSE 'operational'
+				END as worst_status
+			FROM services s
+			INNER JOIN service_group_members sgm ON s.id = sgm.service_id
+			WHERE sgm.group_id = $1
+		`, g.ID).Scan(&worstStatus)
+
+		if err != nil {
+			g.Status = "operational"
+		} else {
+			g.Status = worstStatus
+		}
+
+		groups = append(groups, g)
+	}
+
+	if groups == nil {
+		groups = []ServiceGroup{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(groups)
+}
+
+// GetServiceGroupUptime returns uptime data for a service group (last 90 days)
+func (h *PublicHandler) GetServiceGroupUptime(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	groupID, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
+	// Virtual service ID for groups is negative
+	virtualServiceID := -groupID
+
+	rows, err := h.DB.Query(`
+		SELECT date, status, uptime_percentage 
+		FROM service_uptime_logs 
+		WHERE service_id = $1 
+		AND date >= CURRENT_DATE - INTERVAL '90 days'
+		ORDER BY date ASC
+	`, virtualServiceID)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type UptimeDay struct {
+		Date             string  `json:"date"`
+		Status           string  `json:"status"`
+		UptimePercentage float64 `json:"uptime_percentage"`
+	}
+
+	var uptimeDays []UptimeDay
+	for rows.Next() {
+		var day UptimeDay
+		if err := rows.Scan(&day.Date, &day.Status, &day.UptimePercentage); err != nil {
+			continue
+		}
+		uptimeDays = append(uptimeDays, day)
+	}
+
+	if uptimeDays == nil {
+		uptimeDays = []UptimeDay{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(uptimeDays)
+}
+
+// GetServiceGroupMembers returns all services that are members of a group
+func (h *PublicHandler) GetServiceGroupMembers(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	groupID, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
+	rows, err := h.DB.Query(`
+		SELECT s.id, s.name, s.description, s.status, s.is_visible
+		FROM services s
+		INNER JOIN service_group_members sgm ON s.id = sgm.service_id
+		WHERE sgm.group_id = $1
+		ORDER BY s.name
+	`, groupID)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type ServiceMember struct {
+		ID          int    `json:"id"`
+		Name        string `json:"name"`
+		Description string `json:"description"`
+		Status      string `json:"status"`
+		IsVisible   bool   `json:"is_visible"`
+	}
+
+	var members []ServiceMember
+	for rows.Next() {
+		var m ServiceMember
+		if err := rows.Scan(&m.ID, &m.Name, &m.Description, &m.Status, &m.IsVisible); err != nil {
+			continue
+		}
+		members = append(members, m)
+	}
+
+	if members == nil {
+		members = []ServiceMember{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(members)
+}
