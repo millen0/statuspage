@@ -152,8 +152,7 @@ maintenance_content = f"""<p style="line-height: inherit; margin: 0px;">
     <strong>{title}</strong><br><br>
     {desc}<br><br>
     <strong>Início (São Paulo):</strong> {start_sp}<br>
-    <strong>Término (São Paulo):</strong> {end_sp}<br><br>
-    Para mais informações, acesse: <a href="https://statuspage.piercloud.io/area/maintenances" style="color: rgb(0, 104, 165);">https://statuspage.piercloud.io/area/maintenances</a>
+    <strong>Término (São Paulo):</strong> {end_sp}
 </p>"""
 
 html_body = template.replace('{{MAINTENANCE_CONTENT}}', maintenance_content)

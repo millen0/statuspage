@@ -53,8 +53,7 @@ def send_maintenance_email(maintenance, subscribers):
         <strong>{maintenance['title']}</strong><br><br>
         {maintenance['description']}<br><br>
         <strong>Início (São Paulo):</strong> {maintenance['start_sp']}<br>
-        <strong>Término (São Paulo):</strong> {maintenance['end_sp']}<br><br>
-        Para mais informações, acesse: <a href="https://statuspage.piercloud.io/area/maintenances" style="color: rgb(0, 104, 165);">https://statuspage.piercloud.io/area/maintenances</a>
+        <strong>Término (São Paulo):</strong> {maintenance['end_sp']}
     </p>"""
     
     sent_count = 0

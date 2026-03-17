@@ -63,8 +63,7 @@ func sendMaintenanceEmails(db *sql.DB, maintenance models.Maintenance) {
 		<strong>%s</strong><br><br>
 		%s<br><br>
 		<strong>Início (São Paulo):</strong> %s<br>
-		<strong>Término (São Paulo):</strong> %s<br><br>
-		Para mais informações, acesse: <a href="https://statuspage.piercloud.io/area/maintenances" style="color: rgb(0, 104, 165);">https://statuspage.piercloud.io/area/maintenances</a>
+		<strong>Término (São Paulo):</strong> %s
 	</p>`, maintenance.Title, maintenance.Description, startSP.Format("02/01/2006 15:04"), endSP.Format("02/01/2006 15:04"))
 
 	auth := smtp.PlainAuth("", smtpUser, smtpPass, smtpHost)
