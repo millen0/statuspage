@@ -88,13 +88,22 @@ export default function ServiceList({ services }) {
     const bars = [];
     
     // Gerar últimos 90 dias (do mais antigo para o mais recente)
+    // Usar data local do navegador, não UTC
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalizar para meia-noite
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const day = today.getDate();
+    const localToday = new Date(year, month, day); // Data local sem hora
     
     for (let i = 89; i >= 0; i--) {
-      const date = new Date(today);
+      const date = new Date(localToday);
       date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
+      
+      // Formatar data como YYYY-MM-DD no timezone local
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
       
       // Procurar log para este dia
       const log = uptimeLogs.find(l => l.date.startsWith(dateStr));
