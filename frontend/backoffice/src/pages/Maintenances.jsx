@@ -35,11 +35,19 @@ export default function Maintenances() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Converter de horário de SP para UTC
+      const convertSPtoUTC = (dateStr) => {
+        if (!dateStr) return null;
+        // Adicionar timezone de SP ao datetime-local
+        const spDate = new Date(dateStr + ':00-03:00');
+        return spDate.toISOString();
+      };
+      
       const payload = {
         ...formData,
-        scheduled_start: new Date(formData.scheduled_start).toISOString(),
-        scheduled_end: new Date(formData.scheduled_end).toISOString(),
-        email_scheduled_time: formData.email_scheduled_time ? new Date(formData.email_scheduled_time).toISOString() : null
+        scheduled_start: convertSPtoUTC(formData.scheduled_start),
+        scheduled_end: convertSPtoUTC(formData.scheduled_end),
+        email_scheduled_time: formData.email_scheduled_time ? convertSPtoUTC(formData.email_scheduled_time) : null
       };
       
       if (editingMaintenance) {
@@ -56,16 +64,22 @@ export default function Maintenances() {
 
   const handleEdit = (maintenance) => {
     setEditingMaintenance(maintenance);
-    const startDate = new Date(maintenance.scheduled_start);
-    const endDate = new Date(maintenance.scheduled_end);
-    const emailTime = maintenance.email_scheduled_time ? new Date(maintenance.email_scheduled_time) : null;
+    
+    // Converter de UTC para horário de SP para exibição
+    const convertUTCtoSP = (utcDateStr) => {
+      if (!utcDateStr) return '';
+      const utcDate = new Date(utcDateStr);
+      // Converter para SP (UTC-3)
+      const spDate = new Date(utcDate.getTime() - (3 * 60 * 60 * 1000));
+      return spDate.toISOString().slice(0, 16);
+    };
     
     setFormData({
       ...maintenance,
-      scheduled_start: startDate.toISOString().slice(0, 16),
-      scheduled_end: endDate.toISOString().slice(0, 16),
+      scheduled_start: convertUTCtoSP(maintenance.scheduled_start),
+      scheduled_end: convertUTCtoSP(maintenance.scheduled_end),
       send_email: maintenance.send_email || false,
-      email_scheduled_time: emailTime ? emailTime.toISOString().slice(0, 16) : '',
+      email_scheduled_time: maintenance.email_scheduled_time ? convertUTCtoSP(maintenance.email_scheduled_time) : '',
     });
     setShowForm(true);
   };
@@ -128,7 +142,7 @@ export default function Maintenances() {
                 </select>
               </div>
               <div>
-                <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>Scheduled Start (UTC)</label>
+                <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>Scheduled Start (Horário de SP)</label>
                 <input
                   type="datetime-local"
                   required
@@ -138,7 +152,7 @@ export default function Maintenances() {
                 />
               </div>
               <div>
-                <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>Scheduled End (UTC)</label>
+                <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>Scheduled End (Horário de SP)</label>
                 <input
                   type="datetime-local"
                   required
@@ -162,7 +176,7 @@ export default function Maintenances() {
               {formData.send_email && (
                 <div>
                   <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>
-                    Email Send Time (UTC) - Leave empty to send immediately
+                    Email Send Time (Horário de SP) - Leave empty to send immediately
                   </label>
                   <input
                     type="datetime-local"
@@ -199,8 +213,9 @@ export default function Maintenances() {
                     <h3 className={theme === 'dark' ? 'text-lg font-medium text-white' : 'text-lg font-medium'}>{maintenance.title}</h3>
                     <p className={theme === 'dark' ? 'text-sm text-gray-400' : 'text-sm text-gray-500'}>{maintenance.description}</p>
                     <div className={theme === 'dark' ? 'text-sm text-gray-400 mt-2' : 'text-sm text-gray-600 mt-2'}>
-                      <div>Start: {new Date(maintenance.scheduled_start).toISOString().replace('T', ' ').slice(0, 19)} UTC</div>
-                      <div>End: {new Date(maintenance.scheduled_end).toISOString().replace('T', ' ').slice(0, 19)} UTC</div>
+                      <div>Start (SP): {new Date(new Date(maintenance.scheduled_start).getTime() - (3 * 60 * 60 * 1000)).toISOString().replace('T', ' ').slice(0, 19)}</div>
+                      <div>End (SP): {new Date(new Date(maintenance.scheduled_end).getTime() - (3 * 60 * 60 * 1000)).toISOString().replace('T', ' ').slice(0, 19)}</div>
+                      <div className="text-xs opacity-70">UTC: {new Date(maintenance.scheduled_start).toISOString().replace('T', ' ').slice(0, 19)} - {new Date(maintenance.scheduled_end).toISOString().replace('T', ' ').slice(0, 19)}</div>
                     </div>
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-2">
                       {maintenance.status}
