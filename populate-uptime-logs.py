@@ -66,15 +66,12 @@ def populate_uptime_logs():
                 
                 # Insert log
                 cursor.execute("""
-                    INSERT INTO service_uptime_logs 
-                    (service_id, date, status, uptime_percentage, total_checks, successful_checks)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                    INSERT INTO uptime_logs 
+                    (service_id, date, uptime_percentage)
+                    VALUES (%s, %s, %s)
                     ON CONFLICT (service_id, date) DO UPDATE
-                    SET status = EXCLUDED.status,
-                        uptime_percentage = EXCLUDED.uptime_percentage,
-                        total_checks = EXCLUDED.total_checks,
-                        successful_checks = EXCLUDED.successful_checks
-                """, (service_id, date, status, uptime_percentage, total_checks, successful_checks))
+                    SET uptime_percentage = EXCLUDED.uptime_percentage
+                """, (service_id, date, uptime_percentage))
             
             conn.commit()
             print(f"✓ Service {service_id} completed")
