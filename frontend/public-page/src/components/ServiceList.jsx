@@ -33,7 +33,13 @@ export default function ServiceList({ services }) {
               ? `${API_URL}/public/service-groups/${service.group_id}/uptime`
               : `${API_URL}/public/services/${service.id}/uptime`;
             
+            console.log(`Fetching uptime for ${service.name} (ID: ${service.id}, Group: ${service.group_id || 'none'}) from: ${endpoint}`);
+            
             const res = await axios.get(endpoint);
+            console.log(`Received ${res.data.length} records for ${service.name}`);
+            if (res.data.length > 0) {
+              console.log(`Last record for ${service.name}:`, res.data[res.data.length - 1]);
+            }
             return { serviceId: service.id, data: res.data || [] };
           } catch (error) {
             console.error(`Error fetching uptime for service ${service.id}:`, error);

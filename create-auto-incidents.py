@@ -99,6 +99,19 @@ def create_auto_incidents():
             title = generate_incident_title(service_name, uptime_percentage)
             description = generate_incident_description(uptime_percentage, hours, minutes)
             
+            # Check if this is today's date
+            from datetime import date as date_class
+            is_today = date == date_class.today()
+            
+            # If it's today and uptime is low, incident is still active
+            if is_today and uptime_percentage < 99.9:
+                status = 'monitoring'
+                resolved_at = None
+                description = f"Service is currently experiencing issues with {uptime_percentage:.2f}% uptime today. Monitoring the situation."
+            else:
+                status = 'resolved'
+                resolved_at = datetime.combine(date, datetime.max.time())
+            
             # Create incident
             cursor.execute("""
                 INSERT INTO incidents 
@@ -109,11 +122,11 @@ def create_auto_incidents():
                 title,
                 description,
                 severity,
-                'resolved',  # Auto-generated incidents are marked as resolved
+                status,
                 service_id,
                 datetime.combine(date, datetime.min.time()),  # Set created_at to start of day
-                datetime.combine(date, datetime.max.time()),  # Set updated_at to end of day
-                datetime.combine(date, datetime.max.time()),  # Set resolved_at to end of day
+                datetime.now() if is_today else datetime.combine(date, datetime.max.time()),
+                resolved_at,
                 True,  # Make visible
                 True,  # Mark as auto-generated
                 date
@@ -122,18 +135,26 @@ def create_auto_incidents():
             incident_id = cursor.fetchone()[0]
             
             # Create initial incident update
+            if is_today:
+                update_message = f"Service is experiencing degraded performance. Current uptime: {float(uptime_percentage):.2f}%"
+                update_status = 'monitoring'
+            else:
+                update_message = f"Service has been restored. Total downtime: {hours}h {minutes}m"
+                update_status = 'resolved'
+            
             cursor.execute("""
                 INSERT INTO incident_updates 
                 (incident_id, status, message, created_at)
                 VALUES (%s, %s, %s, %s)
             """, (
                 incident_id,
-                'resolved',
-                f"Service has been restored. Total downtime: {hours}h {minutes}m",
-                datetime.combine(date, datetime.max.time())
+                update_status,
+                update_message,
+                datetime.now() if is_today else datetime.combine(date, datetime.max.time())
             ))
             
-            print(f"✓ Created incident #{incident_id} for {service_name} on {date} ({float(uptime_percentage):.2f}% uptime)")
+            status_label = 'ACTIVE' if is_today else 'resolved'
+            print(f"✓ Created incident #{incident_id} for {service_name} on {date} ({float(uptime_percentage):.2f}% uptime) - {status_label}")
         
         conn.commit()
         print(f"\n✅ Successfully created {len(degraded_logs)} auto-generated incidents")
