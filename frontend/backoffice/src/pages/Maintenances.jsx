@@ -43,6 +43,16 @@ export default function Maintenances() {
         return spDate.toISOString();
       };
       
+      // Validar que email_scheduled_time é antes do scheduled_start
+      if (formData.send_email && formData.email_scheduled_time) {
+        const emailTime = new Date(formData.email_scheduled_time);
+        const startTime = new Date(formData.scheduled_start);
+        if (emailTime >= startTime) {
+          alert('Email send time must be BEFORE the maintenance start time!');
+          return;
+        }
+      }
+      
       const payload = {
         ...formData,
         scheduled_start: convertSPtoUTC(formData.scheduled_start),
@@ -185,7 +195,7 @@ export default function Maintenances() {
                     className={theme === 'dark' ? 'mt-1 block w-full bg-[#0d1117] border border-[#30363d] rounded-md shadow-sm py-2 px-3 text-white' : 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3'}
                   />
                   <p className={theme === 'dark' ? 'mt-1 text-xs text-gray-400' : 'mt-1 text-xs text-gray-500'}>
-                    If empty, email will be sent immediately when you save
+                    ⚠️ Email must be scheduled BEFORE maintenance start time. If empty, email will be sent immediately.
                   </p>
                 </div>
               )}
