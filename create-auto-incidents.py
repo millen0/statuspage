@@ -127,7 +127,7 @@ def create_auto_incidents():
                 datetime.combine(date, datetime.min.time()),  # Set created_at to start of day
                 datetime.now() if is_today else datetime.combine(date, datetime.max.time()),
                 resolved_at,
-                True,  # Make visible
+                False,  # NOT visible by default - user must publish manually
                 True,  # Mark as auto-generated
                 date
             ))

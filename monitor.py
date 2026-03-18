@@ -60,15 +60,18 @@ def send_slack_alert(name, url, status_code, error, is_recovery=False):
     
     if is_recovery:
         color = "good"
-        title = f"✅ RECOVERED: {name} is back online"
+        emoji = ":white_check_mark:"
+        title = f"{emoji} RECOVERED: {name} is back online"
         message = "Service has recovered"
     elif error:
         color = "danger"
-        title = f"🚨 ALERT: {name} is DOWN"
+        emoji = ":rotating_light:"
+        title = f"{emoji} ALERT: {name} is DOWN"
         message = f"Error: {error}"
     elif status_code and not (200 <= status_code <= 299 or 400 <= status_code <= 499):
         color = "warning"
-        title = f"⚠️ WARNING: {name} returned unexpected status"
+        emoji = ":warning:"
+        title = f"{emoji} WARNING: {name} returned unexpected status"
         message = f"Status Code: {status_code}"
     else:
         return  # Não envia alerta para status OK sem mudança
