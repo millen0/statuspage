@@ -5,7 +5,7 @@ import UptimeTooltip from './UptimeTooltip';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 // Service Group Card Component (inline)
-function ServiceGroupCard({ group, uptimeData, incidentsData, generateUptimeBars, calculateOverallUptime, statusColors }) {
+function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, generateUptimeBars, calculateOverallUptime, statusColors }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [members, setMembers] = useState([]);
   const [membersLoaded, setMembersLoaded] = useState(false);
@@ -14,8 +14,27 @@ function ServiceGroupCard({ group, uptimeData, incidentsData, generateUptimeBars
     if (!isExpanded && !membersLoaded) {
       try {
         const res = await axios.get(`${API_URL}/public/service-groups/${group.id}/members`);
-        setMembers(res.data || []);
+        const membersList = res.data || [];
+        setMembers(membersList);
         setMembersLoaded(true);
+        
+        // Fetch uptime for each member
+        const uptimePromises = membersList.map(async (member) => {
+          try {
+            const uptimeRes = await axios.get(`${API_URL}/public/services/${member.id}/uptime`);
+            return { serviceId: member.id, data: uptimeRes.data || [] };
+          } catch (error) {
+            console.error(`Error fetching uptime for member ${member.id}:`, error);
+            return { serviceId: member.id, data: [] };
+          }
+        });
+        
+        const results = await Promise.all(uptimePromises);
+        const newUptimeData = { ...uptimeData };
+        results.forEach(result => {
+          newUptimeData[result.serviceId] = result.data;
+        });
+        setUptimeData(newUptimeData);
       } catch (error) {
         console.error('Error fetching group members:', error);
       }
@@ -277,6 +296,7 @@ export default function ServiceList({ services }) {
           key={`group-${group.id}`}
           group={{ ...group, virtual_service_id: -group.id }}
           uptimeData={uptimeData}
+          setUptimeData={setUptimeData}
           incidentsData={incidentsData}
           generateUptimeBars={generateUptimeBars}
           calculateOverallUptime={calculateOverallUptime}
