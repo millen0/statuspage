@@ -50,15 +50,12 @@ def update_daily_uptime():
             
             # Insert or update today's log
             cursor.execute("""
-                INSERT INTO service_uptime_logs 
-                (service_id, date, status, uptime_percentage, total_checks, successful_checks)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                INSERT INTO uptime_logs 
+                (service_id, date, uptime_percentage)
+                VALUES (%s, %s, %s)
                 ON CONFLICT (service_id, date) DO UPDATE
-                SET status = EXCLUDED.status,
-                    uptime_percentage = EXCLUDED.uptime_percentage,
-                    total_checks = EXCLUDED.total_checks,
-                    successful_checks = EXCLUDED.successful_checks
-            """, (service_id, today, status, uptime_percentage, total_checks, successful_checks))
+                SET uptime_percentage = EXCLUDED.uptime_percentage
+            """, (service_id, today, uptime_percentage))
             
             print(f"✓ Service {service_id}: {status} - {uptime_percentage}% uptime")
         
