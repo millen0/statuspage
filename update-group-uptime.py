@@ -76,40 +76,17 @@ def calculate_group_uptime():
                 placeholders = ','.join(['%s'] * len(member_ids))
                 
                 cur.execute(f"""
-                    SELECT service_id, status, uptime_percentage
-                    FROM service_uptime_logs
+                    SELECT service_id, uptime_percentage
+                    FROM uptime_logs
                     WHERE service_id IN ({placeholders})
                     AND date = %s
                 """, (*member_ids, calc_date))
                 
                 daily_logs = cur.fetchall()
                 
-                # Determinar status agregado do grupo
-                # Se QUALQUER serviço tiver problema, o grupo tem problema
-                group_status = 'operational'
-                min_uptime = 100.0
-                
+                # Calcular uptime agregado (média dos serviços)
                 if daily_logs:
-                    for service_id, status, uptime_pct in daily_logs:
-                        if uptime_pct < min_uptime:
-                            min_uptime = uptime_pct
-                        
-                        # Pior status prevalece
-                        if status == 'outage':
-                            group_status = 'outage'
-                        elif status == 'degraded' and group_status != 'outage':
-                            group_status = 'degraded'
-                        elif status == 'maintenance' and group_status == 'operational':
-                            group_status = 'maintenance'
-                    
-                    # Calcular uptime agregado (média dos serviços)
-                    avg_uptime = sum([log[2] for log in daily_logs]) / len(daily_logs)
-                    
-                    # Se algum serviço crítico caiu, reduzir drasticamente o uptime do grupo
-                    if group_status == 'outage':
-                        avg_uptime = min(avg_uptime, 50.0)
-                    elif group_status == 'degraded':
-                        avg_uptime = min(avg_uptime, 97.0)
+                    avg_uptime = sum([log[1] for log in daily_logs]) / len(daily_logs)
                 else:
                     # Sem dados, assumir operacional
                     avg_uptime = 100.0
@@ -119,25 +96,19 @@ def calculate_group_uptime():
                 virtual_service_id = -group_id
                 
                 cur.execute("""
-                    INSERT INTO service_uptime_logs 
-                    (service_id, date, status, uptime_percentage, total_checks, successful_checks)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                    INSERT INTO uptime_logs 
+                    (service_id, date, uptime_percentage)
+                    VALUES (%s, %s, %s)
                     ON CONFLICT (service_id, date) DO UPDATE
-                    SET status = EXCLUDED.status,
-                        uptime_percentage = EXCLUDED.uptime_percentage,
-                        total_checks = EXCLUDED.total_checks,
-                        successful_checks = EXCLUDED.successful_checks
+                    SET uptime_percentage = EXCLUDED.uptime_percentage
                 """, (
                     virtual_service_id,
                     calc_date,
-                    group_status,
-                    avg_uptime,
-                    1440,  # checks por dia
-                    int(1440 * avg_uptime / 100)
+                    avg_uptime
                 ))
                 
                 if days_ago == 0:  # Apenas log do dia atual
-                    print(f"   ✅ {calc_date}: {group_status} - {avg_uptime:.2f}% uptime")
+                    print(f"   ✅ {calc_date}: {avg_uptime:.2f}% uptime")
             
             conn.commit()
             print(f"\n   ✅ Uptime agregado calculado para {display_name}")
