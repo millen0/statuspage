@@ -19,6 +19,7 @@ DB_PASSWORD = os.getenv('DB_PASSWORD')
 
 def get_severity_from_uptime(uptime):
     """Determine severity based on uptime percentage"""
+    uptime = float(uptime)
     if uptime < 50:
         return 'critical'
     elif uptime < 95:
@@ -30,13 +31,14 @@ def get_severity_from_uptime(uptime):
 
 def calculate_downtime(uptime_percentage):
     """Calculate downtime in hours and minutes"""
-    downtime_minutes = round((100 - uptime_percentage) * 14.4)  # 1440 minutes in a day
+    downtime_minutes = round((100 - float(uptime_percentage)) * 14.4)  # 1440 minutes in a day
     hours = downtime_minutes // 60
     minutes = downtime_minutes % 60
     return hours, minutes
 
 def generate_incident_title(service_name, uptime_percentage):
     """Generate incident title based on uptime"""
+    uptime_percentage = float(uptime_percentage)
     if uptime_percentage < 50:
         return f"{service_name} - Major Outage"
     elif uptime_percentage < 95:
@@ -57,7 +59,7 @@ def generate_incident_description(uptime_percentage, hours, minutes):
         else:
             downtime_str += f"{minutes} minute{'s' if minutes > 1 else ''}"
     
-    return f"Service experienced {downtime_str} of downtime ({uptime_percentage:.2f}% uptime). This incident was automatically detected from uptime monitoring data."
+    return f"Service experienced {downtime_str} of downtime ({float(uptime_percentage):.2f}% uptime). This incident was automatically detected from uptime monitoring data."
 
 def create_auto_incidents():
     """Create incidents for uptime logs with degraded performance"""
@@ -131,7 +133,7 @@ def create_auto_incidents():
                 datetime.combine(date, datetime.max.time())
             ))
             
-            print(f"✓ Created incident #{incident_id} for {service_name} on {date} ({uptime_percentage:.2f}% uptime)")
+            print(f"✓ Created incident #{incident_id} for {service_name} on {date} ({float(uptime_percentage):.2f}% uptime)")
         
         conn.commit()
         print(f"\n✅ Successfully created {len(degraded_logs)} auto-generated incidents")
