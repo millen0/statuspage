@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://statuspage.piercloud.io/api';
+const API_URL = 'http://status.piercloud.com/api';
 
 export const api = axios.create({
   baseURL: API_URL,

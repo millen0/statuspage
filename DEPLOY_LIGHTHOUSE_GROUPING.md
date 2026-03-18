@@ -163,7 +163,7 @@ tail -f /var/log/statuspage/group-uptime.log
 
 ## 🌐 Passo 4: Verificar na Página Pública
 
-1. Acesse: https://statuspage.piercloud.io/
+1. Acesse: http://status.piercloud.com/
 2. Verifique se o card **LIGHTHOUSE** aparece no modo uptime
 3. Verifique se os 90 dias de uptime estão sendo exibidos
 4. Passe o mouse sobre as barras para ver os detalhes de cada dia
