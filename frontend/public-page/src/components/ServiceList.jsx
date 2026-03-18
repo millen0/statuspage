@@ -106,7 +106,11 @@ export default function ServiceList({ services }) {
       const dateStr = `${year}-${month}-${day}`;
       
       // Procurar log para este dia
-      const log = uptimeLogs.find(l => l.date.startsWith(dateStr));
+      // Extrair apenas a parte da data (YYYY-MM-DD) do timestamp UTC
+      const log = uptimeLogs.find(l => {
+        const logDate = l.date.split('T')[0]; // Pega apenas YYYY-MM-DD
+        return logDate === dateStr;
+      });
       const dayIncidents = serviceIncidents[dateStr] || [];
       
       let status = 'operational';
