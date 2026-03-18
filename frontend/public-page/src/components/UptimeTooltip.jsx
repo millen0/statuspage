@@ -5,7 +5,9 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
   const [position, setPosition] = useState({ x: 0, y: 0 });
 
   const formatDate = (dateStr) => {
-    const date = new Date(dateStr);
+    // Extrair apenas a parte da data (YYYY-MM-DD) e criar data local
+    const [year, month, day] = dateStr.split('T')[0].split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
   };
