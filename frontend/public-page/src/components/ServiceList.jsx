@@ -33,24 +33,23 @@ export default function ServiceList({ services }) {
       try {
         const res = await axios.get(`${API_URL}/public/service-groups`);
         const groups = res.data || [];
-        setServiceGroups(groups);
+        const activeGroups = groups.filter(g => g.is_active);
+        setServiceGroups(activeGroups);
 
-        // Organize services by group
-        const grouped = {};
-        const standalone = [];
-
-        services.forEach(service => {
-          if (service.group_id) {
-            if (!grouped[service.group_id]) {
-              grouped[service.group_id] = [];
-            }
-            grouped[service.group_id].push(service);
-          } else {
-            standalone.push(service);
+        // Get all service IDs that belong to any group
+        const groupMemberIds = new Set();
+        for (const group of activeGroups) {
+          try {
+            const membersRes = await axios.get(`${API_URL}/public/service-groups/${group.id}/members`);
+            const members = membersRes.data || [];
+            members.forEach(m => groupMemberIds.add(m.id));
+          } catch (error) {
+            console.error(`Error fetching members for group ${group.id}:`, error);
           }
-        });
+        }
 
-        setGroupedServices(grouped);
+        // Filter standalone services (not in any group)
+        const standalone = services.filter(service => !groupMemberIds.has(service.id));
         setStandaloneServices(standalone);
       } catch (error) {
         console.error('Error fetching groups:', error);
