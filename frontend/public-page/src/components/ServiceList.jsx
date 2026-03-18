@@ -94,40 +94,19 @@ export default function ServiceList({ services }) {
     fetchDisplayMode();
   }, []);
 
-  // Fetch service groups and organize services
+  // Fetch service groups
   useEffect(() => {
     const fetchGroups = async () => {
       try {
         const res = await axios.get(`${API_URL}/public/service-groups`);
-        const groups = res.data || [];
-        const activeGroups = groups.filter(g => g.is_active);
-        setServiceGroups(activeGroups);
-
-        // Get all service IDs that belong to any group
-        const groupMemberIds = new Set();
-        for (const group of activeGroups) {
-          try {
-            const membersRes = await axios.get(`${API_URL}/public/service-groups/${group.id}/members`);
-            const members = membersRes.data || [];
-            members.forEach(m => groupMemberIds.add(m.id));
-          } catch (error) {
-            console.error(`Error fetching members for group ${group.id}:`, error);
-          }
-        }
-
-        // Filter standalone services (not in any group)
-        const standalone = services.filter(service => !groupMemberIds.has(service.id));
-        setStandaloneServices(standalone);
+        setServiceGroups(res.data || []);
       } catch (error) {
         console.error('Error fetching groups:', error);
-        setStandaloneServices(services);
       }
     };
 
-    if (services && services.length > 0) {
-      fetchGroups();
-    }
-  }, [services]);
+    fetchGroups();
+  }, []);
 
   useEffect(() => {
     if (displayMode === 'uptime' && services && services.length > 0) {
@@ -296,7 +275,6 @@ export default function ServiceList({ services }) {
   return (
     <div className={`grid grid-cols-${gridColumns} gap-4 mb-8`}>
       {/* Render Service Groups */}
-      {console.log('Rendering groups:', serviceGroups.length, serviceGroups)}
       {serviceGroups.map((group) => (
         <ServiceGroupCard
           key={`group-${group.id}`}
@@ -309,10 +287,11 @@ export default function ServiceList({ services }) {
         />
       ))}
       
-      {/* Render Standalone Services */}
-      {console.log('Rendering standalone services:', standaloneServices.length, standaloneServices)}
-      {standaloneServices && standaloneServices.length > 0 ? (
-        standaloneServices.map((service) => (
+      {/* Render Services (hide those with group_id) */}
+      {services && services.length > 0 ? (
+        services
+          .filter(service => !service.group_id || service.group_id === 0)
+          .map((service) => (
           <div key={service.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
             <div className="mb-4">
               <h3 className="text-lg font-semibold">{service.name}</h3>
@@ -330,11 +309,11 @@ export default function ServiceList({ services }) {
             </div>
           </div>
         ))
-      ) : serviceGroups.length === 0 ? (
+      ) : (
         <div className="col-span-2 bg-white border border-gray-200 rounded-lg p-8 text-center text-gray-500">
           No services available
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
