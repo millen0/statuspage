@@ -306,7 +306,7 @@ func (h *AdminHandler) CreateService(w http.ResponseWriter, r *http.Request) {
 	if s.Incident != nil && *s.Incident != "" && s.IncidentPublished {
 		_, _ = h.DB.Exec(
 			"INSERT INTO incidents (title, description, severity, status, service_id, is_visible) VALUES ($1, $2, $3, $4, $5, $6)",
-			s.Name+" Incident", *s.Incident, "major", "investigating", s.ID, true,
+			s.Name+" Incident", *s.Incident, "major", "investigating", s.ID, false,
 		)
 	}
 
@@ -382,7 +382,7 @@ func (h *AdminHandler) UpdateService(w http.ResponseWriter, r *http.Request) {
 	if s.Incident != nil && *s.Incident != "" && s.IncidentPublished {
 		_, _ = h.DB.Exec(
 			"INSERT INTO incidents (title, description, severity, status, service_id, is_visible) VALUES ($1, $2, $3, $4, $5, $6)",
-			s.Name+" Incident", *s.Incident, "major", "investigating", id, true,
+			s.Name+" Incident", *s.Incident, "major", "investigating", id, false,
 		)
 	}
 
