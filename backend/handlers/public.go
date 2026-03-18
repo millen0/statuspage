@@ -96,7 +96,6 @@ func (h *PublicHandler) GetIncidents(w http.ResponseWriter, r *http.Request) {
 		FROM incidents 
 		WHERE is_visible = true
 		ORDER BY created_at DESC
-		LIMIT 10
 	`)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
