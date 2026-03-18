@@ -10,7 +10,18 @@ export default function HistorySection({ incidents }) {
     });
   };
 
-  const resolvedIncidents = incidents.filter(i => i.status === 'resolved' && i.is_visible).slice(0, 10);
+  // Filter only today's resolved incidents
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const resolvedIncidents = incidents.filter(i => {
+    if (i.status !== 'resolved' || !i.is_visible) return false;
+    
+    const incidentDate = new Date(i.resolved_at || i.updated_at);
+    incidentDate.setHours(0, 0, 0, 0);
+    
+    return incidentDate.getTime() === today.getTime();
+  });
 
   if (resolvedIncidents.length === 0) {
     return null;
@@ -18,7 +29,7 @@ export default function HistorySection({ incidents }) {
 
   return (
     <div className="mb-8">
-      <h3 className="text-lg font-semibold mb-4">Recent History</h3>
+      <h3 className="text-lg font-semibold mb-4">Recent History (Today)</h3>
       
       {resolvedIncidents.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
