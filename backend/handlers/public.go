@@ -54,17 +54,33 @@ func (h *PublicHandler) GetHeartbeat(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PublicHandler) GetServices(w http.ResponseWriter, r *http.Request) {
-	rows, err := h.DB.Query("SELECT id, name, description, status, position, url, heartbeat_interval, request_timeout, retries, is_visible, created_at, updated_at FROM services WHERE is_visible = true ORDER BY position")
+	rows, err := h.DB.Query(`
+		SELECT s.id, s.name, s.description, s.status, s.position, s.url, 
+		       s.heartbeat_interval, s.request_timeout, s.retries, s.is_visible, 
+		       s.created_at, s.updated_at,
+		       COALESCE(sgm.group_id, 0) as group_id
+		FROM services s
+		LEFT JOIN service_group_members sgm ON s.id = sgm.service_id
+		WHERE s.is_visible = true 
+		ORDER BY s.position
+	`)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	var services []models.Service
+	type ServiceWithGroup struct {
+		models.Service
+		GroupID int `json:"group_id,omitempty"`
+	}
+
+	var services []ServiceWithGroup
 	for rows.Next() {
-		var s models.Service
-		if err := rows.Scan(&s.ID, &s.Name, &s.Description, &s.Status, &s.Position, &s.URL, &s.HeartbeatInterval, &s.RequestTimeout, &s.Retries, &s.IsVisible, &s.CreatedAt, &s.UpdatedAt); err != nil {
+		var s ServiceWithGroup
+		if err := rows.Scan(&s.ID, &s.Name, &s.Description, &s.Status, &s.Position, &s.URL, 
+			&s.HeartbeatInterval, &s.RequestTimeout, &s.Retries, &s.IsVisible, 
+			&s.CreatedAt, &s.UpdatedAt, &s.GroupID); err != nil {
 			continue
 		}
 		services = append(services, s)

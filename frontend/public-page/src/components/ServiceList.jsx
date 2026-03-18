@@ -28,7 +28,12 @@ export default function ServiceList({ services }) {
       const fetchUptimeData = async () => {
         const uptimePromises = services.map(async (service) => {
           try {
-            const res = await axios.get(`${API_URL}/public/services/${service.id}/uptime`);
+            // If service belongs to a group, fetch group uptime instead
+            const endpoint = service.group_id 
+              ? `${API_URL}/public/service-groups/${service.group_id}/uptime`
+              : `${API_URL}/public/services/${service.id}/uptime`;
+            
+            const res = await axios.get(endpoint);
             return { serviceId: service.id, data: res.data || [] };
           } catch (error) {
             console.error(`Error fetching uptime for service ${service.id}:`, error);
