@@ -52,10 +52,7 @@ function ServiceGroupCard({ group, uptimeData, incidentsData, generateUptimeBars
         <div className="mt-6 space-y-4 pl-7 border-l-2 border-gray-200">
           {members.map(member => (
             <div key={member.id} className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${statusColors[member.status]}`}></div>
-                <span className="text-sm font-medium text-gray-700">{member.name}</span>
-              </div>
+              <div className="text-sm font-medium text-gray-700">{member.name}</div>
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <span>91 days ago</span>
                 <span className="font-medium">{calculateOverallUptime(member.id)}% uptime</span>
