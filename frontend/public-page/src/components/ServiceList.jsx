@@ -229,6 +229,7 @@ export default function ServiceList({ services }) {
   return (
     <div className={`grid grid-cols-${gridColumns} gap-4 mb-8`}>
       {/* Render Service Groups */}
+      {console.log('Rendering groups:', serviceGroups.length, serviceGroups)}
       {serviceGroups.map((group) => (
         <ServiceGroupCard
           key={`group-${group.id}`}
@@ -239,6 +240,7 @@ export default function ServiceList({ services }) {
       ))}
       
       {/* Render Standalone Services */}
+      {console.log('Rendering standalone services:', standaloneServices.length, standaloneServices)}
       {standaloneServices && standaloneServices.length > 0 ? (
         standaloneServices.map((service) => (
           <div key={service.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
