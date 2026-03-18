@@ -249,11 +249,11 @@ func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request)
 	serviceID := vars["id"]
 
 	rows, err := h.DB.Query(`
-		SELECT sul.date, sul.status, sul.uptime_percentage
-		FROM service_uptime_logs sul
-		WHERE sul.service_id = $1 
-		AND sul.date >= CURRENT_DATE - INTERVAL '90 days'
-		ORDER BY sul.date ASC
+		SELECT date, uptime_percentage
+		FROM uptime_logs
+		WHERE service_id = $1 
+		AND date >= CURRENT_DATE - INTERVAL '90 days'
+		ORDER BY date ASC
 	`, serviceID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -270,7 +270,6 @@ func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request)
 
 	type UptimeDay struct {
 		Date             string         `json:"date"`
-		Status           string         `json:"status"`
 		UptimePercentage float64        `json:"uptime_percentage"`
 		Incidents        []IncidentInfo `json:"incidents"`
 	}
@@ -278,7 +277,7 @@ func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request)
 	var uptimeDays []UptimeDay
 	for rows.Next() {
 		var day UptimeDay
-		if err := rows.Scan(&day.Date, &day.Status, &day.UptimePercentage); err != nil {
+		if err := rows.Scan(&day.Date, &day.UptimePercentage); err != nil {
 			continue
 		}
 
@@ -390,8 +389,8 @@ func (h *PublicHandler) GetServiceGroupUptime(w http.ResponseWriter, r *http.Req
 	virtualServiceID := -groupID
 
 	rows, err := h.DB.Query(`
-		SELECT date, status, uptime_percentage 
-		FROM service_uptime_logs 
+		SELECT date, uptime_percentage 
+		FROM uptime_logs 
 		WHERE service_id = $1 
 		AND date >= CURRENT_DATE - INTERVAL '90 days'
 		ORDER BY date ASC
@@ -405,14 +404,13 @@ func (h *PublicHandler) GetServiceGroupUptime(w http.ResponseWriter, r *http.Req
 
 	type UptimeDay struct {
 		Date             string  `json:"date"`
-		Status           string  `json:"status"`
 		UptimePercentage float64 `json:"uptime_percentage"`
 	}
 
 	var uptimeDays []UptimeDay
 	for rows.Next() {
 		var day UptimeDay
-		if err := rows.Scan(&day.Date, &day.Status, &day.UptimePercentage); err != nil {
+		if err := rows.Scan(&day.Date, &day.UptimePercentage); err != nil {
 			continue
 		}
 		uptimeDays = append(uptimeDays, day)
