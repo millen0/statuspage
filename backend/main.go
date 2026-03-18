@@ -68,6 +68,12 @@ func main() {
 	admin.HandleFunc("/services/{id}/publish-incident", adminHandler.PublishServiceIncident).Methods("POST")
 	admin.HandleFunc("/services/{id}/unpublish-incident", adminHandler.UnpublishServiceIncident).Methods("POST")
 
+	admin.HandleFunc("/service-groups", adminHandler.GetServiceGroups).Methods("GET")
+	admin.HandleFunc("/service-groups", adminHandler.CreateServiceGroup).Methods("POST")
+	admin.HandleFunc("/service-groups/{id}", adminHandler.UpdateServiceGroup).Methods("PUT")
+	admin.HandleFunc("/service-groups/{id}", adminHandler.DeleteServiceGroup).Methods("DELETE")
+	admin.HandleFunc("/service-groups/{id}/members", adminHandler.GetServiceGroupMembers).Methods("GET")
+
 	admin.HandleFunc("/incidents", adminHandler.GetIncidents).Methods("GET")
 	admin.HandleFunc("/incidents", adminHandler.CreateIncident).Methods("POST")
 	admin.HandleFunc("/incidents/{id}", adminHandler.UpdateIncident).Methods("PUT")

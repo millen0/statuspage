@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import UptimeTooltip from './UptimeTooltip';
+import ServiceGroupCard from './ServiceGroupCard';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
@@ -9,6 +10,9 @@ export default function ServiceList({ services }) {
   const [gridColumns, setGridColumns] = useState('2');
   const [uptimeData, setUptimeData] = useState({});
   const [incidentsData, setIncidentsData] = useState({});
+  const [serviceGroups, setServiceGroups] = useState([]);
+  const [groupedServices, setGroupedServices] = useState({});
+  const [standaloneServices, setStandaloneServices] = useState([]);
 
   useEffect(() => {
     const fetchDisplayMode = async () => {
@@ -23,27 +27,65 @@ export default function ServiceList({ services }) {
     fetchDisplayMode();
   }, []);
 
+  // Fetch service groups and organize services
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/public/service-groups`);
+        const groups = res.data || [];
+        setServiceGroups(groups);
+
+        // Organize services by group
+        const grouped = {};
+        const standalone = [];
+
+        services.forEach(service => {
+          if (service.group_id) {
+            if (!grouped[service.group_id]) {
+              grouped[service.group_id] = [];
+            }
+            grouped[service.group_id].push(service);
+          } else {
+            standalone.push(service);
+          }
+        });
+
+        setGroupedServices(grouped);
+        setStandaloneServices(standalone);
+      } catch (error) {
+        console.error('Error fetching groups:', error);
+        setStandaloneServices(services);
+      }
+    };
+
+    if (services && services.length > 0) {
+      fetchGroups();
+    }
+  }, [services]);
+
   useEffect(() => {
     if (displayMode === 'uptime' && services && services.length > 0) {
       const fetchUptimeData = async () => {
-        const uptimePromises = services.map(async (service) => {
+        const allItems = [...services];
+        
+        // Add virtual service IDs for groups
+        serviceGroups.forEach(group => {
+          allItems.push({ id: -group.id, group_id: group.id, name: group.display_name });
+        });
+
+        const uptimePromises = allItems.map(async (item) => {
           try {
-            // If service belongs to a group, fetch group uptime instead
-            const endpoint = service.group_id 
-              ? `${API_URL}/public/service-groups/${service.group_id}/uptime`
-              : `${API_URL}/public/services/${service.id}/uptime`;
-            
-            console.log(`Fetching uptime for ${service.name} (ID: ${service.id}, Group: ${service.group_id || 'none'}) from: ${endpoint}`);
+            const endpoint = item.group_id && item.id < 0
+              ? `${API_URL}/public/service-groups/${item.group_id}/uptime`
+              : item.group_id
+              ? `${API_URL}/public/service-groups/${item.group_id}/uptime`
+              : `${API_URL}/public/services/${item.id}/uptime`;
             
             const res = await axios.get(endpoint);
-            console.log(`Received ${res.data.length} records for ${service.name}`);
-            if (res.data.length > 0) {
-              console.log(`Last record for ${service.name}:`, res.data[res.data.length - 1]);
-            }
-            return { serviceId: service.id, data: res.data || [] };
+            return { serviceId: item.id, data: res.data || [] };
           } catch (error) {
-            console.error(`Error fetching uptime for service ${service.id}:`, error);
-            return { serviceId: service.id, data: [] };
+            console.error(`Error fetching uptime for ${item.name}:`, error);
+            return { serviceId: item.id, data: [] };
           }
         });
         
@@ -77,7 +119,7 @@ export default function ServiceList({ services }) {
       fetchUptimeData();
       fetchIncidentsData();
     }
-  }, [displayMode, services]);
+  }, [displayMode, services, serviceGroups]);
 
   const statusColors = {
     operational: 'bg-green-500',
@@ -187,8 +229,19 @@ export default function ServiceList({ services }) {
 
   return (
     <div className={`grid grid-cols-${gridColumns} gap-4 mb-8`}>
-      {services && services.length > 0 ? (
-        services.map((service) => (
+      {/* Render Service Groups */}
+      {serviceGroups.map((group) => (
+        <ServiceGroupCard
+          key={`group-${group.id}`}
+          group={{ ...group, virtual_service_id: -group.id }}
+          uptimeData={uptimeData}
+          incidentsData={incidentsData}
+        />
+      ))}
+      
+      {/* Render Standalone Services */}
+      {standaloneServices && standaloneServices.length > 0 ? (
+        standaloneServices.map((service) => (
           <div key={service.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
             <div className="mb-4">
               <h3 className="text-lg font-semibold">{service.name}</h3>
@@ -206,11 +259,11 @@ export default function ServiceList({ services }) {
             </div>
           </div>
         ))
-      ) : (
+      ) : serviceGroups.length === 0 ? (
         <div className="col-span-2 bg-white border border-gray-200 rounded-lg p-8 text-center text-gray-500">
           No services available
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -877,3 +877,182 @@ func (h *AdminHandler) UpdateDisplayMode(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"display_mode": req.DisplayMode, "grid_columns": req.GridColumns})
 }
+
+// Service Groups
+func (h *AdminHandler) GetServiceGroups(w http.ResponseWriter, r *http.Request) {
+	rows, err := h.DB.Query(`
+		SELECT id, name, display_name, description, is_active, created_at, updated_at 
+		FROM service_groups 
+		ORDER BY display_name
+	`)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type ServiceGroup struct {
+		ID          int       `json:"id"`
+		Name        string    `json:"name"`
+		DisplayName string    `json:"display_name"`
+		Description string    `json:"description"`
+		IsActive    bool      `json:"is_active"`
+		CreatedAt   time.Time `json:"created_at"`
+		UpdatedAt   time.Time `json:"updated_at"`
+	}
+
+	var groups []ServiceGroup
+	for rows.Next() {
+		var g ServiceGroup
+		if err := rows.Scan(&g.ID, &g.Name, &g.DisplayName, &g.Description, &g.IsActive, &g.CreatedAt, &g.UpdatedAt); err != nil {
+			continue
+		}
+		groups = append(groups, g)
+	}
+
+	if groups == nil {
+		groups = []ServiceGroup{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(groups)
+}
+
+func (h *AdminHandler) CreateServiceGroup(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Name        string `json:"name"`
+		DisplayName string `json:"display_name"`
+		Description string `json:"description"`
+		IsActive    bool   `json:"is_active"`
+		MemberIDs   []int  `json:"member_ids"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var groupID int
+	err := h.DB.QueryRow(
+		"INSERT INTO service_groups (name, display_name, description, is_active) VALUES ($1, $2, $3, $4) RETURNING id",
+		req.Name, req.DisplayName, req.Description, req.IsActive,
+	).Scan(&groupID)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Add members
+	for _, serviceID := range req.MemberIDs {
+		_, err := h.DB.Exec(
+			"INSERT INTO service_group_members (group_id, service_id) VALUES ($1, $2) ON CONFLICT (group_id, service_id) DO NOTHING",
+			groupID, serviceID,
+		)
+		if err != nil {
+			log.Printf("Error adding member %d to group %d: %v", serviceID, groupID, err)
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"id": groupID, "success": true})
+}
+
+func (h *AdminHandler) UpdateServiceGroup(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, _ := strconv.Atoi(vars["id"])
+
+	var req struct {
+		Name        string `json:"name"`
+		DisplayName string `json:"display_name"`
+		Description string `json:"description"`
+		IsActive    bool   `json:"is_active"`
+		MemberIDs   []int  `json:"member_ids"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_, err := h.DB.Exec(
+		"UPDATE service_groups SET name=$1, display_name=$2, description=$3, is_active=$4, updated_at=$5 WHERE id=$6",
+		req.Name, req.DisplayName, req.Description, req.IsActive, time.Now(), id,
+	)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Remove all existing members
+	_, _ = h.DB.Exec("DELETE FROM service_group_members WHERE group_id = $1", id)
+
+	// Add new members
+	for _, serviceID := range req.MemberIDs {
+		_, err := h.DB.Exec(
+			"INSERT INTO service_group_members (group_id, service_id) VALUES ($1, $2) ON CONFLICT (group_id, service_id) DO NOTHING",
+			id, serviceID,
+		)
+		if err != nil {
+			log.Printf("Error adding member %d to group %d: %v", serviceID, id, err)
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"id": id, "success": true})
+}
+
+func (h *AdminHandler) DeleteServiceGroup(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	_, err := h.DB.Exec("DELETE FROM service_groups WHERE id=$1", id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *AdminHandler) GetServiceGroupMembers(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	groupID, _ := strconv.Atoi(vars["id"])
+
+	rows, err := h.DB.Query(`
+		SELECT s.id, s.name, s.description, s.status, s.is_visible
+		FROM services s
+		INNER JOIN service_group_members sgm ON s.id = sgm.service_id
+		WHERE sgm.group_id = $1
+		ORDER BY s.name
+	`, groupID)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type ServiceMember struct {
+		ID          int    `json:"id"`
+		Name        string `json:"name"`
+		Description string `json:"description"`
+		Status      string `json:"status"`
+		IsVisible   bool   `json:"is_visible"`
+	}
+
+	var members []ServiceMember
+	for rows.Next() {
+		var m ServiceMember
+		if err := rows.Scan(&m.ID, &m.Name, &m.Description, &m.Status, &m.IsVisible); err != nil {
+			continue
+		}
+		members = append(members, m)
+	}
+
+	if members == nil {
+		members = []ServiceMember{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(members)
+}

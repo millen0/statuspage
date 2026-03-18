@@ -29,6 +29,9 @@ export default function Layout({ children }) {
                 <Link to="/services" className={theme === 'dark' ? 'border-transparent text-gray-400 hover:text-gray-200 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium'}>
                   Services
                 </Link>
+                <Link to="/groups" className={theme === 'dark' ? 'border-transparent text-gray-400 hover:text-gray-200 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium'}>
+                  Groups
+                </Link>
                 <Link to="/incidents" className={theme === 'dark' ? 'border-transparent text-gray-400 hover:text-gray-200 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium'}>
                   Incidents
                 </Link>
