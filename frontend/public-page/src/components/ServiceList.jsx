@@ -1,9 +1,76 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import UptimeTooltip from './UptimeTooltip';
-import ServiceGroupCard from './ServiceGroupCard';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
+// Service Group Card Component (inline)
+function ServiceGroupCard({ group, uptimeData, incidentsData, generateUptimeBars, calculateOverallUptime, statusColors }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [members, setMembers] = useState([]);
+  const [membersLoaded, setMembersLoaded] = useState(false);
+
+  const toggleExpand = async () => {
+    if (!isExpanded && !membersLoaded) {
+      try {
+        const res = await axios.get(`${API_URL}/public/service-groups/${group.id}/members`);
+        setMembers(res.data || []);
+        setMembersLoaded(true);
+      } catch (error) {
+        console.error('Error fetching group members:', error);
+      }
+    }
+    setIsExpanded(!isExpanded);
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+      <div className="flex items-center gap-2 cursor-pointer mb-4" onClick={toggleExpand}>
+        <svg 
+          className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+        <h3 className="text-lg font-semibold">{group.display_name}</h3>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-xs text-gray-500">
+          <span>91 days ago</span>
+          <span className="font-medium">{calculateOverallUptime(group.virtual_service_id)}% uptime</span>
+          <span>Today</span>
+        </div>
+        <div className="flex gap-0.5">
+          {generateUptimeBars(group.virtual_service_id)}
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="mt-6 space-y-4 pl-7 border-l-2 border-gray-200">
+          {members.map(member => (
+            <div key={member.id} className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${statusColors[member.status]}`}></div>
+                <span className="text-sm font-medium text-gray-700">{member.name}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span>91 days ago</span>
+                <span className="font-medium">{calculateOverallUptime(member.id)}% uptime</span>
+                <span>Today</span>
+              </div>
+              <div className="flex gap-0.5">
+                {generateUptimeBars(member.id)}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ServiceList({ services }) {
   const [displayMode, setDisplayMode] = useState('classic');
@@ -236,6 +303,9 @@ export default function ServiceList({ services }) {
           group={{ ...group, virtual_service_id: -group.id }}
           uptimeData={uptimeData}
           incidentsData={incidentsData}
+          generateUptimeBars={generateUptimeBars}
+          calculateOverallUptime={calculateOverallUptime}
+          statusColors={statusColors}
         />
       ))}
       
