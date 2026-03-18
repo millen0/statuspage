@@ -181,7 +181,7 @@ export default function ServiceList({ services }) {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs text-gray-500">
-                <span>90 days ago</span>
+                <span>91 days ago</span>
                 <span className="font-medium">{calculateOverallUptime(service.id)}% uptime</span>
                 <span>Today</span>
               </div>
