@@ -220,13 +220,13 @@ func sendSlackMaintenanceAlert(maintenance models.Maintenance, isCompleted bool)
 	payload := map[string]interface{}{
 		"attachments": []map[string]interface{}{
 			{
-				"color": color,
-				"title": title,
+				"color":    color,
+				"title":    title,
+				"text":     maintenance.Description,
 				"fields": []map[string]interface{}{
 					{"title": "Status", "value": maintenance.Status, "short": true},
 					{"title": "Start", "value": maintenance.ScheduledStart.Format("2006-01-02 15:04 UTC"), "short": true},
 					{"title": "End", "value": maintenance.ScheduledEnd.Format("2006-01-02 15:04 UTC"), "short": true},
-					{"title": "Description", "value": maintenance.Description, "short": false},
 				},
 			},
 		},
@@ -666,8 +666,15 @@ func (h *AdminHandler) CreateMaintenance(w http.ResponseWriter, r *http.Request)
 
 	// Enviar emails apenas se send_email = true, ainda não foi enviado E horário chegou
 	if m.SendEmail && !m.EmailSent {
-		if m.EmailScheduledTime == nil || time.Now().After(*m.EmailScheduledTime) {
-			// Enviar imediatamente
+		if m.EmailScheduledTime == nil {
+			// Enviar imediatamente se não há horário agendado
+			go func() {
+				sendMaintenanceEmails(h.DB, m)
+				h.DB.Exec("UPDATE maintenances SET email_sent = true WHERE id = $1", m.ID)
+			}()
+			m.EmailSent = true
+		} else if time.Now().After(*m.EmailScheduledTime) {
+			// Enviar se o horário agendado já passou
 			go func() {
 				sendMaintenanceEmails(h.DB, m)
 				h.DB.Exec("UPDATE maintenances SET email_sent = true WHERE id = $1", m.ID)
@@ -708,7 +715,15 @@ func (h *AdminHandler) UpdateMaintenance(w http.ResponseWriter, r *http.Request)
 
 	// Enviar email se marcado, ainda não foi enviado E horário chegou
 	if m.SendEmail && !emailSent {
-		if m.EmailScheduledTime == nil || time.Now().After(*m.EmailScheduledTime) {
+		if m.EmailScheduledTime == nil {
+			// Enviar imediatamente se não há horário agendado
+			go func() {
+				sendMaintenanceEmails(h.DB, m)
+				h.DB.Exec("UPDATE maintenances SET email_sent = true WHERE id = $1", id)
+			}()
+			m.EmailSent = true
+		} else if time.Now().After(*m.EmailScheduledTime) {
+			// Enviar se o horário agendado já passou
 			go func() {
 				sendMaintenanceEmails(h.DB, m)
 				h.DB.Exec("UPDATE maintenances SET email_sent = true WHERE id = $1", id)
