@@ -45,34 +45,52 @@ def send_slack_alert(service_name, old_status, new_status):
     except Exception as e:
         print(f"   ❌ Slack error: {e}")
 
-def check_service_with_codes(service_id, name, url, timeout, accepted_codes):
-    try:
-        response = requests.get(url, timeout=timeout, allow_redirects=True)
-        status_code = response.status_code
-        
-        # Se tem accepted_codes configurado, usar ele
-        if accepted_codes and '400-499' in accepted_codes:
-            # Aceita 2xx e 4xx
-            if (200 <= status_code <= 299) or (400 <= status_code <= 499):
-                return 'operational'
-            elif status_code >= 500:
-                return 'outage'
+def check_service_with_codes(service_id, name, url, timeout, accepted_codes, retries=1):
+    """Check service with retry logic"""
+    last_error = None
+    
+    for attempt in range(retries):
+        try:
+            response = requests.get(url, timeout=timeout, allow_redirects=True)
+            status_code = response.status_code
+            
+            # Se tem accepted_codes configurado, usar ele
+            if accepted_codes and '400-499' in accepted_codes:
+                # Aceita 2xx e 4xx
+                if (200 <= status_code <= 299) or (400 <= status_code <= 499):
+                    return 'operational'
+                elif status_code >= 500:
+                    last_error = f"HTTP {status_code}"
+                    if attempt < retries - 1:
+                        continue  # Retry
+                    return 'outage'
+                else:
+                    return 'degraded'
             else:
-                return 'degraded'
-        else:
-            # Padrão: apenas 2xx é operational
-            if status_code >= 500:
-                return 'outage'
-            elif status_code >= 300 and status_code < 400:
-                return 'degraded'
-            elif 200 <= status_code <= 299:
-                return 'operational'
-            else:
-                return 'degraded'
-    except requests.exceptions.Timeout:
-        return 'degraded'
-    except:
-        return 'outage'
+                # Padrão: apenas 2xx é operational
+                if status_code >= 500:
+                    last_error = f"HTTP {status_code}"
+                    if attempt < retries - 1:
+                        continue  # Retry
+                    return 'outage'
+                elif status_code >= 300 and status_code < 400:
+                    return 'degraded'
+                elif 200 <= status_code <= 299:
+                    return 'operational'
+                else:
+                    return 'degraded'
+        except requests.exceptions.Timeout:
+            last_error = "Timeout"
+            if attempt < retries - 1:
+                continue  # Retry
+            return 'degraded'
+        except Exception as e:
+            last_error = str(e)
+            if attempt < retries - 1:
+                continue  # Retry
+            return 'outage'
+    
+    return 'outage'
 
 def create_or_update_incident(cur, conn, service_id, name, new_status):
     if new_status in ['outage', 'degraded']:
@@ -110,17 +128,18 @@ def monitor_services():
     
     # Buscar services com URL
     cur.execute("""
-        SELECT id, name, url, status, request_timeout, accepted_status_codes 
+        SELECT id, name, url, status, request_timeout, accepted_status_codes, retries 
         FROM services 
         WHERE url IS NOT NULL AND url != ''
     """)
     
     for row in cur.fetchall():
-        service_id, name, url, current_status, timeout, accepted_codes = row
+        service_id, name, url, current_status, timeout, accepted_codes, retries = row
         timeout = timeout if timeout else 10
+        retries = retries if retries else 1
         
-        # Verificar status
-        new_status = check_service_with_codes(service_id, name, url, timeout, accepted_codes)
+        # Verificar status com retries
+        new_status = check_service_with_codes(service_id, name, url, timeout, accepted_codes, retries)
         
         # Se mudou, atualizar
         if new_status != current_status:
