@@ -16,6 +16,7 @@ export default function ServiceGroups() {
     display_name: '',
     description: '',
     is_active: true,
+    parent_service_id: null,
     member_ids: []
   });
 
@@ -44,6 +45,22 @@ export default function ServiceGroups() {
     } catch (error) {
       console.error('Error fetching services:', error);
     }
+  };
+
+  // Generate slug from display name
+  const generateSlug = (displayName) => {
+    return displayName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
+  const handleDisplayNameChange = (value) => {
+    setFormData({
+      ...formData,
+      display_name: value,
+      name: generateSlug(value)
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -81,6 +98,7 @@ export default function ServiceGroups() {
         display_name: group.display_name,
         description: group.description || '',
         is_active: group.is_active,
+        parent_service_id: group.parent_service_id || null,
         member_ids: memberIds
       });
     } catch (error) {
@@ -112,7 +130,7 @@ export default function ServiceGroups() {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', display_name: '', description: '', is_active: true, member_ids: [] });
+    setFormData({ name: '', display_name: '', description: '', is_active: true, parent_service_id: null, member_ids: [] });
     setEditingGroup(null);
     setShowForm(false);
   };
@@ -140,29 +158,41 @@ export default function ServiceGroups() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>
-                  Name (slug)
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className={theme === 'dark' ? 'mt-1 block w-full bg-[#0d1117] border border-[#30363d] rounded-md shadow-sm py-2 px-3 text-white' : 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3'}
-                  placeholder="lighthouse"
-                />
-              </div>
-              <div>
-                <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>
-                  Display Name
+                  Group Name
                 </label>
                 <input
                   type="text"
                   required
                   value={formData.display_name}
-                  onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+                  onChange={(e) => handleDisplayNameChange(e.target.value)}
                   className={theme === 'dark' ? 'mt-1 block w-full bg-[#0d1117] border border-[#30363d] rounded-md shadow-sm py-2 px-3 text-white' : 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3'}
                   placeholder="LIGHTHOUSE"
                 />
+                {formData.name && (
+                  <p className={theme === 'dark' ? 'mt-1 text-xs text-gray-400' : 'mt-1 text-xs text-gray-500'}>
+                    Slug: {formData.name}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>
+                  Parent Service (Optional)
+                </label>
+                <select
+                  value={formData.parent_service_id || ''}
+                  onChange={(e) => setFormData({ ...formData, parent_service_id: e.target.value ? parseInt(e.target.value) : null })}
+                  className={theme === 'dark' ? 'mt-1 block w-full bg-[#0d1117] border border-[#30363d] rounded-md shadow-sm py-2 px-3 text-white' : 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3'}
+                >
+                  <option value="">-- No parent service --</option>
+                  {services.map(service => (
+                    <option key={service.id} value={service.id}>
+                      {service.name}
+                    </option>
+                  ))}
+                </select>
+                <p className={theme === 'dark' ? 'mt-1 text-xs text-gray-400' : 'mt-1 text-xs text-gray-500'}>
+                  Select a main service as the base for this group (e.g., LIGHTHOUSE service for Lighthouse group)
+                </p>
               </div>
               <div>
                 <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>
@@ -189,10 +219,13 @@ export default function ServiceGroups() {
               </div>
               <div>
                 <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300 mb-2' : 'block text-sm font-medium text-gray-700 mb-2'}>
-                  Member Services
+                  Additional Member Services
                 </label>
+                <p className={theme === 'dark' ? 'text-xs text-gray-400 mb-2' : 'text-xs text-gray-500 mb-2'}>
+                  Select other services to include in this group
+                </p>
                 <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border border-gray-300 rounded p-3">
-                  {services.map(service => (
+                  {services.filter(s => s.id !== formData.parent_service_id).map(service => (
                     <label key={service.id} className="flex items-center space-x-2 cursor-pointer">
                       <input
                         type="checkbox"
