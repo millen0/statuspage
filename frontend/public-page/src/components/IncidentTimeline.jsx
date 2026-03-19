@@ -11,8 +11,8 @@ export default function IncidentTimeline({ incidents }) {
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleString('pt-BR', {
-      timeZone: 'America/Sao_Paulo',
+    return new Date(date).toLocaleString('en-US', {
+      timeZone: 'UTC',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',

@@ -52,8 +52,8 @@ def send_maintenance_email(maintenance, subscribers):
         A Pier Cloud informa que realizará uma <strong>manutenção programada</strong> conforme detalhes abaixo:<br><br>
         <strong>{maintenance['title']}</strong><br><br>
         {maintenance['description']}<br><br>
-        <strong>Início (São Paulo):</strong> {maintenance['start_sp']}<br>
-        <strong>Término (São Paulo):</strong> {maintenance['end_sp']}
+        <strong>Início:</strong> {maintenance['start_utc']}<br>
+        <strong>Término:</strong> {maintenance['end_utc']}
     </p>"""
     
     sent_count = 0
@@ -121,16 +121,15 @@ def process_scheduled_emails():
     for maint in maintenances:
         maint_id, title, desc, start, end, scheduled_time = maint
         
-        # Converter para São Paulo (UTC-3)
-        from datetime import timedelta
-        start_sp = (start - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')
-        end_sp = (end - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')
+        # Format as UTC
+        start_utc = start.strftime('%Y-%m-%d %H:%M UTC')
+        end_utc = end.strftime('%Y-%m-%d %H:%M UTC')
         
         maintenance_data = {
             'title': title,
             'description': desc,
-            'start_sp': start_sp,
-            'end_sp': end_sp
+            'start_utc': start_utc,
+            'end_utc': end_utc
         }
         
         print(f"\n📨 Sending emails for: {title}")

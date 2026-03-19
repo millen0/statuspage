@@ -121,12 +121,12 @@ try:
     print(f"   Scheduled Start: {start}")
     print(f"   Scheduled End: {end}")
     
-    # Converter para São Paulo
-    start_sp = (start - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')
-    end_sp = (end - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')
+    # Format as UTC
+    start_utc = start.strftime('%Y-%m-%d %H:%M UTC')
+    end_utc = end.strftime('%Y-%m-%d %H:%M UTC')
     
-    print(f"   Início (SP): {start_sp}")
-    print(f"   Fim (SP): {end_sp}")
+    print(f"   Start: {start_utc}")
+    print(f"   End: {end_utc}")
     
 except Exception as e:
     print(f"   ❌ Erro: {e}")
@@ -151,8 +151,8 @@ maintenance_content = f"""<p style="line-height: inherit; margin: 0px;">
     A Pier Cloud informa que realizará uma <strong>manutenção programada</strong> conforme detalhes abaixo:<br><br>
     <strong>{title}</strong><br><br>
     {desc}<br><br>
-    <strong>Início (São Paulo):</strong> {start_sp}<br>
-    <strong>Término (São Paulo):</strong> {end_sp}
+    <strong>Início:</strong> {start_utc}<br>
+    <strong>Término:</strong> {end_utc}
 </p>"""
 
 html_body = template.replace('{{MAINTENANCE_CONTENT}}', maintenance_content)

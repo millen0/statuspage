@@ -1,7 +1,7 @@
 export default function HistorySection({ incidents }) {
   const formatDate = (date) => {
-    return new Date(date).toLocaleString('pt-BR', {
-      timeZone: 'America/Sao_Paulo',
+    return new Date(date).toLocaleString('en-US', {
+      timeZone: 'UTC',
       day: 'numeric',
       month: 'short',
       year: 'numeric',

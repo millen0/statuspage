@@ -44,8 +44,8 @@ def send_slack_alert(title, status, description, scheduled_start, scheduled_end)
             "title": title_prefix + title,
             "fields": [
                 {"title": "Status", "value": status, "short": True},
-                {"title": "Início (Horário de SP)", "value": scheduled_start, "short": True},
-                {"title": "Fim (Horário de SP)", "value": scheduled_end, "short": True},
+                {"title": "Início", "value": scheduled_start, "short": True},
+                {"title": "Fim", "value": scheduled_end, "short": True},
                 {"title": "Descrição", "value": description or "N/A", "short": False}
             ]
         }]
@@ -61,7 +61,6 @@ def update_maintenances():
     conn = psycopg2.connect(**DB_CONFIG)
     cur = conn.cursor()
     
-    sp_tz = ZoneInfo("America/Sao_Paulo")
     now = datetime.now(timezone.utc)
     
     # Atualizar para in_progress
@@ -75,10 +74,10 @@ def update_maintenances():
         maintenance_id, title, description, scheduled_start, scheduled_end = row
         cur.execute("UPDATE maintenances SET status = 'in_progress', actual_start = %s, updated_at = %s WHERE id = %s", (now, now, maintenance_id))
         
-        # Converter para horário de SP
-        start_sp = scheduled_start.replace(tzinfo=timezone.utc).astimezone(sp_tz).strftime("%d/%m/%Y %H:%M")
-        end_sp = scheduled_end.replace(tzinfo=timezone.utc).astimezone(sp_tz).strftime("%d/%m/%Y %H:%M")
-        send_slack_alert(title, "in_progress", description, start_sp, end_sp)
+        # Format as UTC
+        start_utc = scheduled_start.replace(tzinfo=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        end_utc = scheduled_end.replace(tzinfo=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        send_slack_alert(title, "in_progress", description, start_utc, end_utc)
         print(f"✅ Manutenção {maintenance_id} iniciada: {title}")
     
     # Atualizar para completed
@@ -92,10 +91,10 @@ def update_maintenances():
         maintenance_id, title, description, scheduled_start, scheduled_end = row
         cur.execute("UPDATE maintenances SET status = 'completed', actual_end = %s, updated_at = %s WHERE id = %s", (now, now, maintenance_id))
         
-        # Converter para horário de SP
-        start_sp = scheduled_start.replace(tzinfo=timezone.utc).astimezone(sp_tz).strftime("%d/%m/%Y %H:%M")
-        end_sp = scheduled_end.replace(tzinfo=timezone.utc).astimezone(sp_tz).strftime("%d/%m/%Y %H:%M")
-        send_slack_alert(title, "completed", description, start_sp, end_sp)
+        # Format as UTC
+        start_utc = scheduled_start.replace(tzinfo=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        end_utc = scheduled_end.replace(tzinfo=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        send_slack_alert(title, "completed", description, start_utc, end_utc)
         print(f"✅ Manutenção {maintenance_id} concluída: {title}")
     
     conn.commit()

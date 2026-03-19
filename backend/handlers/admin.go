@@ -51,9 +51,6 @@ func sendMaintenanceEmails(db *sql.DB, maintenance models.Maintenance) {
 	}
 	defer rows.Close()
 
-	startSP := maintenance.ScheduledStart.Add(-3 * time.Hour)
-	endSP := maintenance.ScheduledEnd.Add(-3 * time.Hour)
-
 	subject := "Informe Plataforma Pier Cloud: Manutenção Programada"
 
 	// Conteúdo personalizado da manutenção
@@ -62,9 +59,9 @@ func sendMaintenanceEmails(db *sql.DB, maintenance models.Maintenance) {
 		A Pier Cloud informa que realizará uma <strong>manutenção programada</strong> conforme detalhes abaixo:<br><br>
 		<strong>%s</strong><br><br>
 		%s<br><br>
-		<strong>Início (São Paulo):</strong> %s<br>
-		<strong>Término (São Paulo):</strong> %s
-	</p>`, maintenance.Title, maintenance.Description, startSP.Format("02/01/2006 15:04"), endSP.Format("02/01/2006 15:04"))
+		<strong>Início:</strong> %s<br>
+		<strong>Término:</strong> %s
+	</p>`, maintenance.Title, maintenance.Description, maintenance.ScheduledStart.Format("2006-01-02 15:04 UTC"), maintenance.ScheduledEnd.Format("2006-01-02 15:04 UTC"))
 
 	auth := smtp.PlainAuth("", smtpUser, smtpPass, smtpHost)
 	
@@ -220,10 +217,6 @@ func sendSlackMaintenanceAlert(maintenance models.Maintenance, isCompleted bool)
 		title = "🚧 Maintenance Started: " + maintenance.Title
 	}
 
-	// Subtrair 3 horas para São Paulo (UTC-3)
-	startSP := maintenance.ScheduledStart.Add(-3 * time.Hour)
-	endSP := maintenance.ScheduledEnd.Add(-3 * time.Hour)
-
 	payload := map[string]interface{}{
 		"attachments": []map[string]interface{}{
 			{
@@ -231,8 +224,8 @@ func sendSlackMaintenanceAlert(maintenance models.Maintenance, isCompleted bool)
 				"title": title,
 				"fields": []map[string]interface{}{
 					{"title": "Status", "value": maintenance.Status, "short": true},
-					{"title": "Start (SP)", "value": startSP.Format("02/01/2006 15:04"), "short": true},
-					{"title": "End (SP)", "value": endSP.Format("02/01/2006 15:04"), "short": true},
+					{"title": "Start", "value": maintenance.ScheduledStart.Format("2006-01-02 15:04 UTC"), "short": true},
+					{"title": "End", "value": maintenance.ScheduledEnd.Format("2006-01-02 15:04 UTC"), "short": true},
 					{"title": "Description", "value": maintenance.Description, "short": false},
 				},
 			},
@@ -346,7 +339,7 @@ func sendSlackServiceStatusChange(serviceName, oldStatus, newStatus string) {
 					{"title": "Previous Status", "value": oldStatus, "short": true},
 					{"title": "Current Status", "value": newStatus, "short": true},
 					{"title": "Service", "value": serviceName, "short": true},
-					{"title": "Time", "value": time.Now().Add(-3 * time.Hour).Format("02/01/2006 15:04"), "short": true},
+					{"title": "Time", "value": time.Now().UTC().Format("2006-01-02 15:04 UTC"), "short": true},
 				},
 			},
 		},
