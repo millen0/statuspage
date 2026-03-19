@@ -179,6 +179,14 @@ export default function ServiceList({ services }) {
       
       fetchUptimeData();
       fetchIncidentsData();
+
+      // Auto-refresh uptime data every 5 minutes
+      const refreshInterval = setInterval(() => {
+        console.log('Auto-refreshing uptime data...');
+        fetchUptimeData();
+      }, 5 * 60 * 1000); // 5 minutes
+
+      return () => clearInterval(refreshInterval);
     }
   }, [displayMode, services, serviceGroups]);
 
