@@ -6,8 +6,9 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 # Carregar configurações
-load_dotenv('/Users/milleno/Documents/statuspage/monitor-config.env')
-load_dotenv('monitor-config.env')  # Fallback para path relativo
+load_dotenv('/opt/statuspage/backend/.env')  # EC2 path
+load_dotenv('backend/.env')  # Relative path
+load_dotenv('monitor-config.env')  # Fallback
 
 DB_CONFIG = {
     'host': os.getenv('DB_HOST', '127.0.0.1'),
