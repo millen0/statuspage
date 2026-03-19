@@ -2,8 +2,12 @@
 import psycopg2
 import requests
 import os
+import urllib3
 from datetime import datetime
 from dotenv import load_dotenv
+
+# Disable SSL warnings
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Carregar configurações
 load_dotenv('/opt/statuspage/backend/.env')  # EC2 path
@@ -51,7 +55,7 @@ def check_service_with_codes(service_id, name, url, timeout, accepted_codes, ret
     
     for attempt in range(retries):
         try:
-            response = requests.get(url, timeout=timeout, allow_redirects=True)
+            response = requests.get(url, timeout=timeout, allow_redirects=True, verify=False)
             status_code = response.status_code
             
             # Se tem accepted_codes configurado, usar ele
