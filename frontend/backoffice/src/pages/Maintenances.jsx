@@ -35,11 +35,11 @@ export default function Maintenances() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Convert datetime-local to UTC
+      // Treat input as UTC directly (user enters UTC time)
       const convertToUTC = (dateStr) => {
         if (!dateStr) return null;
-        const date = new Date(dateStr + ':00Z');
-        return date.toISOString();
+        // Append seconds and Z to treat as UTC
+        return dateStr + ':00Z';
       };
       
       // Validar que email_scheduled_time é antes do scheduled_start
@@ -74,11 +74,11 @@ export default function Maintenances() {
   const handleEdit = (maintenance) => {
     setEditingMaintenance(maintenance);
     
-    // Convert UTC to local datetime-local format
+    // Keep as UTC for editing (no timezone conversion)
     const convertUTCtoLocal = (utcDateStr) => {
       if (!utcDateStr) return '';
-      const utcDate = new Date(utcDateStr);
-      return utcDate.toISOString().slice(0, 16);
+      // Remove Z and timezone info, treat as UTC
+      return utcDateStr.slice(0, 16);
     };
     
     setFormData({
@@ -149,7 +149,9 @@ export default function Maintenances() {
                 </select>
               </div>
               <div>
-                <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>Scheduled Start</label>
+                <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>
+                  Scheduled Start (UTC)
+                </label>
                 <input
                   type="datetime-local"
                   required
@@ -157,9 +159,14 @@ export default function Maintenances() {
                   onChange={(e) => setFormData({ ...formData, scheduled_start: e.target.value })}
                   className={theme === 'dark' ? 'mt-1 block w-full bg-[#0d1117] border border-[#30363d] rounded-md shadow-sm py-2 px-3 text-white' : 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3'}
                 />
+                <p className={theme === 'dark' ? 'mt-1 text-xs text-gray-400' : 'mt-1 text-xs text-gray-500'}>
+                  Enter time in UTC format. Current UTC time: {new Date().toISOString().slice(0, 16).replace('T', ' ')}
+                </p>
               </div>
               <div>
-                <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>Scheduled End</label>
+                <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>
+                  Scheduled End (UTC)
+                </label>
                 <input
                   type="datetime-local"
                   required
@@ -167,6 +174,9 @@ export default function Maintenances() {
                   onChange={(e) => setFormData({ ...formData, scheduled_end: e.target.value })}
                   className={theme === 'dark' ? 'mt-1 block w-full bg-[#0d1117] border border-[#30363d] rounded-md shadow-sm py-2 px-3 text-white' : 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3'}
                 />
+                <p className={theme === 'dark' ? 'mt-1 text-xs text-gray-400' : 'mt-1 text-xs text-gray-500'}>
+                  Enter time in UTC format
+                </p>
               </div>
               <div className="flex items-center">
                 <input
@@ -183,16 +193,17 @@ export default function Maintenances() {
               {formData.send_email && (
                 <div>
                   <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>
-                    Email Send Time - Leave empty to send immediately
+                    Email Send Time (UTC) - Leave empty to send immediately
                   </label>
                   <input
                     type="datetime-local"
                     value={formData.email_scheduled_time}
                     onChange={(e) => setFormData({ ...formData, email_scheduled_time: e.target.value })}
                     className={theme === 'dark' ? 'mt-1 block w-full bg-[#0d1117] border border-[#30363d] rounded-md shadow-sm py-2 px-3 text-white' : 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3'}
+                    placeholder="Leave empty to send immediately"
                   />
                   <p className={theme === 'dark' ? 'mt-1 text-xs text-gray-400' : 'mt-1 text-xs text-gray-500'}>
-                    ⚠️ Email must be scheduled BEFORE maintenance start time. If empty, email will be sent immediately.
+                    ⚠️ Enter time in UTC. Email must be scheduled BEFORE maintenance start time. If empty, email will be sent immediately.
                   </p>
                 </div>
               )}
