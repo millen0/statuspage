@@ -69,7 +69,7 @@ def update_daily_uptime():
             
             if existing:
                 # Update existing record - calculate weighted average
-                current_uptime = existing[0]
+                current_uptime = float(existing[0])  # Convert Decimal to float
                 status_uptime = calculate_uptime_for_status(status, 1, hours_elapsed)
                 
                 # Weighted update: blend current status into the day's average
