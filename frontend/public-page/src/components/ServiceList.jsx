@@ -305,7 +305,7 @@ export default function ServiceList({ services }) {
       ))}
       
       {/* Render Services (hide those with group_id) */}
-      {services && services.length > 0 ? (
+      {services && services.length > 0 && services.filter(service => !service.group_id || service.group_id === 0).length > 0 ? (
         services
           .filter(service => !service.group_id || service.group_id === 0)
           .map((service) => (
@@ -326,11 +326,7 @@ export default function ServiceList({ services }) {
             </div>
           </div>
         ))
-      ) : (
-        <div className="col-span-2 bg-white border border-gray-200 rounded-lg p-8 text-center text-gray-500">
-          No services available
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }
