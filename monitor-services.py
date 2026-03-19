@@ -29,12 +29,24 @@ def send_slack_alert(service_name, old_status, new_status):
         print(f"   ⚠️  SLACK_WEBHOOK not configured")
         return
     
-    color = "danger" if new_status == "outage" else "warning"
+    # Definir cor e emoji baseado no novo status
+    if new_status == "operational":
+        color = "good"
+        emoji = "✅"
+        title = f"{emoji} Service Recovered: {service_name}"
+    elif new_status == "outage":
+        color = "danger"
+        emoji = "🚨"
+        title = f"{emoji} Service Status Changed: {service_name}"
+    else:  # degraded
+        color = "warning"
+        emoji = "⚠️"
+        title = f"{emoji} Service Status Changed: {service_name}"
     
     payload = {
         "attachments": [{
             "color": color,
-            "title": f"🚨 Service Status Changed: {service_name}",
+            "title": title,
             "fields": [
                 {"title": "Service", "value": service_name, "short": True},
                 {"title": "Old Status", "value": old_status, "short": True},
