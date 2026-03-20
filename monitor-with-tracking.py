@@ -181,6 +181,11 @@ def check_and_report(name, url, previous_state, service_config=None):
     """
     Verifica serviço e reporta status
     service_config: (service_id, db_url, heartbeat_interval, request_timeout, retries)
+    
+    Status Logic:
+    - 200-299 ou 400-499: ✅ Operational (não registra downtime)
+    - Outros códigos (500-599, etc): 🟡 Degraded (registra downtime)
+    - Erro de conexão: 🔴 Outage (registra downtime)
     """
     # Usar configurações do serviço ou padrões
     if service_config:
@@ -201,8 +206,9 @@ def check_and_report(name, url, previous_state, service_config=None):
     error = None
     is_tcp_check = False
     success = False
+    is_degraded = False
     
-    # Detectar se é TCP check
+    # Detectar se é TCP check (sem scheme http/https)
     parsed = urlparse(url)
     if not parsed.scheme:
         is_tcp_check = True
@@ -224,15 +230,25 @@ def check_and_report(name, url, previous_state, service_config=None):
                 response = requests.get(url, timeout=request_timeout, verify=True)
                 status_code = response.status_code
                 
-                if 200 <= status_code <= 299 or 400 <= status_code <= 499:
-                    print(f"   ✅ Status {status_code}")
+                # Status Logic:
+                # 200-299 ou 400-499 = Operational (não é downtime)
+                # Outros códigos = Degraded (é downtime)
+                if 200 <= status_code <= 299:
+                    print(f"   ✅ Status {status_code} (Operational)")
                     success = True
+                    break
+                elif 400 <= status_code <= 499:
+                    print(f"   ✅ Status {status_code} (Client Error - Operational)")
+                    success = True
+                    break
                 else:
-                    print(f"   🚨 ALARM: Status {status_code}")
+                    # 500-599 ou outros = Degraded
+                    print(f"   🟡 Status {status_code} (Degraded Performance)")
                     success = False
+                    is_degraded = True
                     if previous_state.get(name) != 'down':
                         send_slack_alert(name, url, status_code, None)
-                break
+                    break
             
         except Exception as e:
             error = str(e)
@@ -242,15 +258,23 @@ def check_and_report(name, url, previous_state, service_config=None):
                 print(f"   ⚠️  Attempt {attempt}/{retries} failed, retrying...")
                 time.sleep(2)
             else:
-                print(f"   🚨 ALARM: Error after {retries} retries: {error}")
+                # Erro de conexão = Outage
+                print(f"   🔴 OUTAGE: Error after {retries} retries: {error}")
                 success = False
+                is_degraded = False  # É outage, não degraded
                 if previous_state.get(name) != 'down':
                     send_slack_alert(name, url, status_code, error)
     
     # Tracking de downtime automático
+    # Apenas registra downtime se NÃO for 200-299 ou 400-499
     if not success and previous_state.get(name) != 'down':
-        # Serviço caiu agora
-        track_downtime(name, True, error or f"Status {status_code}")
+        # Serviço caiu agora (degraded ou outage)
+        error_msg = error or f"Status {status_code}"
+        if is_degraded:
+            error_msg = f"Degraded: {error_msg}"
+        else:
+            error_msg = f"Outage: {error_msg}"
+        track_downtime(name, True, error_msg)
     elif success and previous_state.get(name) == 'down':
         # Serviço recuperou
         track_downtime(name, False)

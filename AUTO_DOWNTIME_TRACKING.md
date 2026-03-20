@@ -63,6 +63,48 @@ crontab -e
 * * * * * cd /opt/statuspage && python3 monitor.py >> monitor.log 2>&1
 ```
 
+## 📊 Lógica de Status
+
+O sistema diferencia três tipos de problemas:
+
+### ✅ Operational (NÃO registra downtime)
+- **Status 200-299**: Sucesso
+- **Status 400-499**: Erro do cliente (considerado operational)
+- **TCP Connection Success**: Para serviços TCP como NLB-Kong
+
+### 🟡 Degraded Performance (REGISTRA downtime)
+- **Status 500-599**: Erro do servidor
+- **Outros códigos não esperados**: 300-399, 600+
+- Serviço responde mas com problemas
+
+### 🔴 Major Outage (REGISTRA downtime)
+- **Erro de conexão**: Timeout, connection refused, DNS failure
+- **TCP Connection Failed**: Para serviços TCP
+- Serviço completamente inacessível
+
+### Exemplos Práticos
+
+```bash
+# Lighthouse-Backend retorna 503
+🔍 lighthouse-backend
+   Config: Timeout=120s | Retries=5 | Interval=60s
+   🟡 Status 503 (Degraded Performance)
+   → Downtime tracked: "Degraded: Status 503"
+
+# NLB-Kong (TCP) não conecta
+🔍 nlb-kong
+   Config: Timeout=60s | Retries=3 | Interval=30s
+   🔌 TCP Check: nlb.example.com
+   🔴 OUTAGE: Error after 3 retries: TCP connection failed
+   → Downtime tracked: "Outage: TCP connection failed"
+
+# API retorna 404 (client error)
+🔍 api-service
+   Config: Timeout=90s | Retries=5 | Interval=60s
+   ✅ Status 404 (Client Error - Operational)
+   → NO downtime tracked (404 é esperado)
+```
+
 ## 📊 Configurações por Serviço
 
 Cada serviço pode ter suas próprias configurações de monitoramento:
