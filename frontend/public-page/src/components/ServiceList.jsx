@@ -63,7 +63,7 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
           <span>Today</span>
         </div>
         <div className="flex gap-0.5">
-          {generateUptimeBars(group.virtual_service_id)}
+          {generateUptimeBars(group.virtual_service_id, false)}
         </div>
       </div>
 
@@ -204,7 +204,7 @@ export default function ServiceList({ services }) {
     maintenance: 'Under Maintenance'
   };
 
-  const generateUptimeBars = (serviceId) => {
+  const generateUptimeBars = (serviceId, showTooltip = true) => {
     const uptimeLogs = uptimeData[serviceId] || [];
     const serviceIncidents = incidentsData[serviceId] || {};
     const bars = [];
@@ -247,16 +247,24 @@ export default function ServiceList({ services }) {
       const isFirstDay = i === 90;
       const isLastDay = i === 0;
       
-      bars.push(
-        <UptimeTooltip
-          key={`${serviceId}-${dateStr}`}
-          date={dateStr}
-          uptimePercentage={uptimePercentage}
-          incidents={dayIncidents}
-        >
-          <div className={`h-8 ${statusColors[status]} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} cursor-pointer hover:opacity-80 transition-opacity`} />
-        </UptimeTooltip>
-      );
+      if (showTooltip) {
+        bars.push(
+          <UptimeTooltip
+            key={`${serviceId}-${dateStr}`}
+            date={dateStr}
+            uptimePercentage={uptimePercentage}
+            incidents={dayIncidents}
+          >
+            <div className={`h-8 ${statusColors[status]} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} cursor-pointer hover:opacity-80 transition-opacity`} />
+          </UptimeTooltip>
+        );
+      } else {
+        bars.push(
+          <div key={`${serviceId}-${dateStr}`} className="flex-1">
+            <div className={`h-8 ${statusColors[status]} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} transition-opacity`} />
+          </div>
+        );
+      }
     }
     return bars;
   };
