@@ -151,11 +151,39 @@ export default function ServiceList({ services }) {
         });
         
         const results = await Promise.all(uptimePromises);
-        const uptimeMap = {};
-        results.forEach(result => {
-          uptimeMap[result.serviceId] = result.data;
+        
+        // Merge com dados existentes ao invés de substituir
+        setUptimeData(prevData => {
+          const newUptimeMap = { ...prevData };
+          results.forEach(result => {
+            // Se já existe dados, fazer merge preservando os piores status
+            if (newUptimeMap[result.serviceId]) {
+              const existingData = newUptimeMap[result.serviceId];
+              const mergedData = [...result.data];
+              
+              // Para cada data existente, manter o pior uptime_percentage
+              existingData.forEach(existingLog => {
+                const existingDate = existingLog.date.split('T')[0];
+                const newLogIndex = mergedData.findIndex(l => l.date.split('T')[0] === existingDate);
+                
+                if (newLogIndex !== -1) {
+                  // Se encontrou, manter o menor uptime (pior cenário)
+                  if (existingLog.uptime_percentage < mergedData[newLogIndex].uptime_percentage) {
+                    mergedData[newLogIndex] = existingLog;
+                  }
+                } else {
+                  // Se não encontrou, adicionar
+                  mergedData.push(existingLog);
+                }
+              });
+              
+              newUptimeMap[result.serviceId] = mergedData;
+            } else {
+              newUptimeMap[result.serviceId] = result.data;
+            }
+          });
+          return newUptimeMap;
         });
-        setUptimeData(uptimeMap);
       };
 
       const fetchIncidentsData = async () => {
@@ -170,11 +198,29 @@ export default function ServiceList({ services }) {
         });
         
         const results = await Promise.all(incidentsPromises);
-        const incidentsMap = {};
-        results.forEach(result => {
-          incidentsMap[result.serviceId] = result.data;
+        
+        // Merge incidents data
+        setIncidentsData(prevData => {
+          const newIncidentsMap = { ...prevData };
+          results.forEach(result => {
+            if (newIncidentsMap[result.serviceId]) {
+              // Merge incidents por data
+              const merged = { ...newIncidentsMap[result.serviceId] };
+              Object.keys(result.data).forEach(date => {
+                if (merged[date]) {
+                  // Combinar incidents da mesma data
+                  merged[date] = [...merged[date], ...result.data[date]];
+                } else {
+                  merged[date] = result.data[date];
+                }
+              });
+              newIncidentsMap[result.serviceId] = merged;
+            } else {
+              newIncidentsMap[result.serviceId] = result.data;
+            }
+          });
+          return newIncidentsMap;
         });
-        setIncidentsData(incidentsMap);
       };
       
       fetchUptimeData();
