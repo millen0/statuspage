@@ -306,21 +306,7 @@ export default function ServiceList({ services }) {
 
   return (
     <div className={`grid grid-cols-${gridColumns} gap-4 mb-8`}>
-      {/* Render Service Groups */}
-      {serviceGroups.map((group) => (
-        <ServiceGroupCard
-          key={`group-${group.id}`}
-          group={{ ...group, virtual_service_id: -group.id }}
-          uptimeData={uptimeData}
-          setUptimeData={setUptimeData}
-          incidentsData={incidentsData}
-          generateUptimeBars={generateUptimeBars}
-          calculateOverallUptime={calculateOverallUptime}
-          statusColors={statusColors}
-        />
-      ))}
-      
-      {/* Render Services (hide those with group_id) */}
+      {/* Render Services first (hide those with group_id) */}
       {services && services.length > 0 && services.filter(service => !service.group_id || service.group_id === 0).length > 0 ? (
         services
           .filter(service => !service.group_id || service.group_id === 0)
@@ -343,6 +329,20 @@ export default function ServiceList({ services }) {
           </div>
         ))
       ) : null}
+      
+      {/* Render Service Groups last */}
+      {serviceGroups.map((group) => (
+        <ServiceGroupCard
+          key={`group-${group.id}`}
+          group={{ ...group, virtual_service_id: -group.id }}
+          uptimeData={uptimeData}
+          setUptimeData={setUptimeData}
+          incidentsData={incidentsData}
+          generateUptimeBars={generateUptimeBars}
+          calculateOverallUptime={calculateOverallUptime}
+          statusColors={statusColors}
+        />
+      ))}
     </div>
   );
 }
