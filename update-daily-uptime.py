@@ -90,8 +90,9 @@ def update_daily_uptime():
                 
                 print(f"✓ Service {service_id}: {status} - {current_uptime:.1f}% → {new_uptime:.1f}% uptime")
             else:
-                # Create new record for today
-                uptime_percentage = calculate_uptime_for_status(status, hours_elapsed, hours_elapsed)
+                # Create new record for today - calculate based on hours elapsed
+                # If service is in outage/degraded, calculate proportional uptime
+                uptime_percentage = calculate_uptime_for_status(status, hours_elapsed, 24.0)
                 
                 cursor.execute("""
                     INSERT INTO uptime_logs 
@@ -99,7 +100,7 @@ def update_daily_uptime():
                     VALUES (%s, %s, %s)
                 """, (service_id, today, uptime_percentage))
                 
-                print(f"✓ Service {service_id}: {status} - {uptime_percentage:.1f}% uptime (new)")
+                print(f"✓ Service {service_id}: {status} - {uptime_percentage:.1f}% uptime (new, {hours_elapsed:.1f}h elapsed)")
         
         conn.commit()
         cursor.close()
