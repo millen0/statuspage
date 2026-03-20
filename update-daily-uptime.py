@@ -7,6 +7,11 @@ Should be run via cron hourly to track status changes throughout the day
 import psycopg2
 import os
 from datetime import datetime, time as dt_time
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv('/opt/statuspage/backend/.env')
+load_dotenv('backend/.env')
 
 # Database connection
 DB_HOST = os.getenv('DB_HOST', 'localhost')
