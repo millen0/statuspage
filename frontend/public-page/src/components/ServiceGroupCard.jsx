@@ -30,7 +30,7 @@ export default function ServiceGroupCard({ group, uptimeData, incidentsData }) {
     setIsExpanded(!isExpanded);
   };
 
-  const generateUptimeBars = (serviceId) => {
+  const generateUptimeBars = (serviceId, showTooltip = true) => {
     const uptimeLogs = uptimeData[serviceId] || [];
     const serviceIncidents = incidentsData[serviceId] || {};
     const bars = [];
@@ -68,15 +68,21 @@ export default function ServiceGroupCard({ group, uptimeData, incidentsData }) {
       const isFirstDay = i === 90;
       const isLastDay = i === 0;
       
+      const barElement = <div className={`h-8 ${statusColors[status]} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} ${showTooltip ? 'cursor-pointer hover:opacity-80' : ''} transition-opacity`} />;
+      
       bars.push(
-        <UptimeTooltip
-          key={`${serviceId}-${dateStr}`}
-          date={dateStr}
-          uptimePercentage={uptimePercentage}
-          incidents={dayIncidents}
-        >
-          <div className={`h-8 ${statusColors[status]} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} cursor-pointer hover:opacity-80 transition-opacity`} />
-        </UptimeTooltip>
+        showTooltip ? (
+          <UptimeTooltip
+            key={`${serviceId}-${dateStr}`}
+            date={dateStr}
+            uptimePercentage={uptimePercentage}
+            incidents={dayIncidents}
+          >
+            {barElement}
+          </UptimeTooltip>
+        ) : (
+          <div key={`${serviceId}-${dateStr}`}>{barElement}</div>
+        )
       );
     }
     return bars;
@@ -116,7 +122,7 @@ export default function ServiceGroupCard({ group, uptimeData, incidentsData }) {
           <span>Today</span>
         </div>
         <div className="flex gap-0.5">
-          {generateUptimeBars(group.virtual_service_id)}
+          {generateUptimeBars(group.virtual_service_id, false)}
         </div>
       </div>
 
