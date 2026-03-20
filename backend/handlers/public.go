@@ -315,6 +315,35 @@ func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request)
 		}
 		incidentRows.Close()
 
+		// Buscar downtimes automáticos deste dia
+		downtimeRows, _ := h.DB.Query(`
+			SELECT 
+				CASE 
+					WHEN status_code >= 500 THEN 'Degraded Performance'
+					WHEN status_code = 0 THEN 'Connection Error'
+					ELSE 'Service Issue'
+				END as title,
+				COALESCE(error_message, 'Automatic downtime detected') as description,
+				CASE 
+					WHEN status_code >= 500 THEN 'minor'
+					WHEN status_code = 0 THEN 'major'
+					ELSE 'minor'
+				END as severity,
+				EXTRACT(EPOCH FROM (COALESCE(end_time, NOW()) - start_time))/60 as duration_minutes
+			FROM service_downtimes
+			WHERE service_id = $1
+			AND DATE(start_time) = $2
+			ORDER BY start_time DESC
+		`, serviceID, day.Date)
+
+		for downtimeRows.Next() {
+			var incident IncidentInfo
+			if err := downtimeRows.Scan(&incident.Title, &incident.Description, &incident.Severity, &incident.Duration); err == nil {
+				day.Incidents = append(day.Incidents, incident)
+			}
+		}
+		downtimeRows.Close()
+
 		if day.Incidents == nil {
 			day.Incidents = []IncidentInfo{}
 		}
