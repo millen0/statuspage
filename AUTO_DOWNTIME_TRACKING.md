@@ -7,6 +7,7 @@ Sistema que captura automaticamente downtimes dos serviços e atualiza o histór
 - ✅ **Tracking Automático**: Registra início e fim de downtimes automaticamente
 - ✅ **Cálculo de Uptime**: Calcula uptime diário baseado em downtimes reais
 - ✅ **Integração com Monitor**: Funciona junto com o sistema de monitoramento existente
+- ✅ **Configurações Individuais**: Respeita heartbeat_interval, request_timeout e retries de cada serviço
 - ✅ **Histórico Persistente**: Mantém histórico de 90 dias no tooltip
 - ✅ **Alertas Slack**: Continua enviando alertas quando configurado
 
@@ -60,6 +61,33 @@ crontab -e
 
 # Adicionar (executa a cada minuto)
 * * * * * cd /opt/statuspage && python3 monitor.py >> monitor.log 2>&1
+```
+
+## 📊 Configurações por Serviço
+
+Cada serviço pode ter suas próprias configurações de monitoramento:
+
+- **Heartbeat Interval**: Intervalo entre checks (segundos)
+- **Request Timeout**: Timeout da requisição (segundos)
+- **Retries**: Número de tentativas antes de considerar down
+
+Essas configurações são definidas em: https://status.piercloud.com/area/services
+
+O monitor busca automaticamente essas configurações do banco de dados e as aplica individualmente para cada serviço.
+
+### Exemplo de Output do Monitor
+
+```
+🔍 lighthouse-backend
+   Config: Timeout=120s | Retries=5 | Interval=60s
+   ✅ Status 200
+   → Reported to backend
+   → Downtime tracked
+
+🔍 lia
+   Config: Timeout=90s | Retries=3 | Interval=30s
+   ✅ Status 200
+   → Reported to backend
 ```
 
 ## 📊 Como Funciona
