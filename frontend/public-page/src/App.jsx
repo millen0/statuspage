@@ -103,7 +103,31 @@ export default function App() {
               <span style={{ fontFamily: 'arial' }}>←</span> Maintenance History
             </Link>
           </div>
-          <div className="text-center text-sm text-gray-600 mt-4">
+          
+          {/* Status Legend */}
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-700 text-center mb-4">Status Legend</h3>
+            <div className="flex justify-center gap-8 flex-wrap">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <span className="text-sm text-gray-600">Operational - All systems running normally</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <span className="text-sm text-gray-600">Degraded Performance - Partial service disruption</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <span className="text-sm text-gray-600">Major Outage - Service unavailable</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                <span className="text-sm text-gray-600">Under Maintenance - Scheduled maintenance in progress</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="text-center text-sm text-gray-600 mt-6">
             © 2026 Pier Cloud. All rights reserved.
           </div>
         </div>
