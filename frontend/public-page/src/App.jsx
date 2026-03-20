@@ -69,8 +69,18 @@ export default function App() {
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <header className="border-b border-gray-200 bg-white">
         <div className="max-w-5xl mx-auto px-4 py-6">
-          <h1 className="text-2xl font-bold">Pier Cloud Status</h1>
-          <p className="text-gray-600 mt-1">Service status and incident history</p>
+          <div className="flex items-center gap-4">
+            <img 
+              src="/piercloud-logo.png" 
+              alt="Pier Cloud" 
+              className="h-12 w-auto"
+              style={{ objectFit: 'contain' }}
+            />
+            <div>
+              <h1 className="text-2xl font-bold">Status</h1>
+              <p className="text-gray-600 mt-1">Service status and incident history</p>
+            </div>
+          </div>
         </div>
       </header>
 
