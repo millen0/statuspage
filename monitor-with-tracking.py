@@ -2,6 +2,7 @@
 """
 Monitor Integrado com Tracking Automático de Downtime
 Monitora serviços e registra downtimes automaticamente
+RESPEITA configurações individuais de cada serviço (heartbeat_interval, request_timeout, retries)
 """
 
 import json
@@ -11,9 +12,11 @@ import time
 import socket
 import os
 import subprocess
+import psycopg2
 from datetime import datetime
 from urllib.parse import urlparse
 from dotenv import load_dotenv
+from psycopg2.extras import RealDictCursor
 
 # Carregar configurações
 load_dotenv('monitor-config.env')
@@ -24,11 +27,65 @@ SLACK_WEBHOOK = os.getenv('SLACK_WEBHOOK', '')
 STATE_FILE = "monitor-state.json"
 DOWNTIME_TRACKER = "./auto-track-downtime.py"
 
-# Configurações
-REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '120'))
-RETRIES = int(os.getenv('RETRIES', '5'))
-HEARTBEAT_INTERVAL = int(os.getenv('HEARTBEAT_INTERVAL', '60'))
+# Configurações padrão (fallback)
+DEFAULT_REQUEST_TIMEOUT = 120
+DEFAULT_RETRIES = 5
+DEFAULT_HEARTBEAT_INTERVAL = 60
 TCP_PORT = 80
+
+def get_db_connection():
+    """Conecta ao banco de dados"""
+    try:
+        conn = psycopg2.connect(
+            host=os.getenv('DB_HOST', 'localhost'),
+            port=os.getenv('DB_PORT', '5432'),
+            database=os.getenv('DB_NAME', 'statuspage'),
+            user=os.getenv('DB_USER', 'postgres'),
+            password=os.getenv('DB_PASSWORD', '')
+        )
+        return conn
+    except Exception as e:
+        print(f"⚠️  Erro ao conectar ao banco: {e}")
+        return None
+
+def get_service_config(service_name):
+    """
+    Busca configurações do serviço no banco de dados
+    Retorna: (service_id, url, heartbeat_interval, request_timeout, retries)
+    """
+    conn = get_db_connection()
+    if not conn:
+        return None, None, DEFAULT_HEARTBEAT_INTERVAL, DEFAULT_REQUEST_TIMEOUT, DEFAULT_RETRIES
+    
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT 
+                    id,
+                    url,
+                    heartbeat_interval,
+                    request_timeout,
+                    retries
+                FROM services
+                WHERE name ILIKE %s
+                LIMIT 1
+            """, (f"%{service_name}%",))
+            
+            result = cur.fetchone()
+            if result:
+                return (
+                    result['id'],
+                    result['url'],
+                    result['heartbeat_interval'] or DEFAULT_HEARTBEAT_INTERVAL,
+                    result['request_timeout'] or DEFAULT_REQUEST_TIMEOUT,
+                    result['retries'] or DEFAULT_RETRIES
+                )
+    except Exception as e:
+        print(f"   ⚠️  Erro ao buscar config do serviço: {e}")
+    finally:
+        conn.close()
+    
+    return None, None, DEFAULT_HEARTBEAT_INTERVAL, DEFAULT_REQUEST_TIMEOUT, DEFAULT_RETRIES
 
 def load_state():
     """Carrega estado anterior dos serviços"""
@@ -67,7 +124,7 @@ def track_downtime(service_name, is_down, error_message=None):
     except Exception as e:
         print(f"   → Downtime tracking error: {e}")
 
-def check_tcp(host, port=TCP_PORT, timeout=REQUEST_TIMEOUT):
+def check_tcp(host, port=TCP_PORT, timeout=DEFAULT_REQUEST_TIMEOUT):
     """Verifica conectividade TCP"""
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -120,8 +177,26 @@ def send_slack_alert(name, url, status_code, error, is_recovery=False):
     except Exception as e:
         print(f"   → Failed to send Slack alert: {e}")
 
-def check_and_report(name, url, previous_state):
-    """Verifica serviço e reporta status"""
+def check_and_report(name, url, previous_state, service_config=None):
+    """
+    Verifica serviço e reporta status
+    service_config: (service_id, db_url, heartbeat_interval, request_timeout, retries)
+    """
+    # Usar configurações do serviço ou padrões
+    if service_config:
+        service_id, db_url, heartbeat_interval, request_timeout, retries = service_config
+        # Se URL do banco existe, usar ela
+        if db_url:
+            url = db_url
+    else:
+        service_id = None
+        heartbeat_interval = DEFAULT_HEARTBEAT_INTERVAL
+        request_timeout = DEFAULT_REQUEST_TIMEOUT
+        retries = DEFAULT_RETRIES
+    
+    print(f"🔍 {name}")
+    print(f"   Config: Timeout={request_timeout}s | Retries={retries} | Interval={heartbeat_interval}s")
+    
     status_code = None
     error = None
     is_tcp_check = False
@@ -132,28 +207,28 @@ def check_and_report(name, url, previous_state):
     if not parsed.scheme:
         is_tcp_check = True
         host = url.rstrip('.')
-        print(f"🔌 TCP Check: {name} - {host}")
+        print(f"   🔌 TCP Check: {host}")
     
     # Tentar com retries
-    for attempt in range(1, RETRIES + 1):
+    for attempt in range(1, retries + 1):
         try:
             if is_tcp_check:
-                if check_tcp(host):
+                if check_tcp(host, timeout=request_timeout):
                     status_code = 200
-                    print(f"✅ {name}: TCP connection successful")
+                    print(f"   ✅ TCP connection successful")
                     success = True
                     break
                 else:
                     raise Exception("TCP connection failed")
             else:
-                response = requests.get(url, timeout=REQUEST_TIMEOUT, verify=True)
+                response = requests.get(url, timeout=request_timeout, verify=True)
                 status_code = response.status_code
                 
                 if 200 <= status_code <= 299 or 400 <= status_code <= 499:
-                    print(f"✅ {name}: {url} - Status {status_code}")
+                    print(f"   ✅ Status {status_code}")
                     success = True
                 else:
-                    print(f"🚨 ALARM: {name}: {url} - Status {status_code}")
+                    print(f"   🚨 ALARM: Status {status_code}")
                     success = False
                     if previous_state.get(name) != 'down':
                         send_slack_alert(name, url, status_code, None)
@@ -163,11 +238,11 @@ def check_and_report(name, url, previous_state):
             error = str(e)
             status_code = 0
             
-            if attempt < RETRIES:
-                print(f"⚠️  {name}: Attempt {attempt}/{RETRIES} failed, retrying...")
+            if attempt < retries:
+                print(f"   ⚠️  Attempt {attempt}/{retries} failed, retrying...")
                 time.sleep(2)
             else:
-                print(f"🚨 ALARM: {name}: {url} - Error after {RETRIES} retries: {error}")
+                print(f"   🚨 ALARM: Error after {retries} retries: {error}")
                 success = False
                 if previous_state.get(name) != 'down':
                     send_slack_alert(name, url, status_code, error)
@@ -201,40 +276,64 @@ def check_and_report(name, url, previous_state):
 
 def main():
     """Função principal do monitor"""
-    json_file = os.getenv('SERVICES_JSON', '/opt/statuspage/services.json')
-    
-    if not os.path.exists(json_file):
-        print(f"❌ Arquivo de serviços não encontrado: {json_file}")
-        sys.exit(1)
-    
-    try:
-        with open(json_file, 'r') as f:
-            content = f.read()
-            content = content.replace(',\\n}', '\\n}').replace('},\\n{', '},\\n{')
-            services = json.loads(f'[{content}]')
-    except Exception as e:
-        print(f"❌ Erro ao ler arquivo JSON: {e}")
-        sys.exit(1)
-    
     # Carregar estado anterior
     previous_state = load_state()
     current_state = {}
     
-    print(f"\\n{'='*60}")
+    print(f"\n{'='*60}")
     print(f"Health Check - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"Config: Timeout={REQUEST_TIMEOUT}s | Retries={RETRIES} | Interval={HEARTBEAT_INTERVAL}s")
     print(f"Downtime Tracking: ENABLED")
-    print(f"{'='*60}\\n")
+    print(f"Service-specific configs: ENABLED")
+    print(f"{'='*60}\n")
+    
+    # Buscar serviços do banco de dados
+    conn = get_db_connection()
+    if not conn:
+        print("❌ Não foi possível conectar ao banco de dados")
+        sys.exit(1)
+    
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT 
+                    id,
+                    name,
+                    url,
+                    heartbeat_interval,
+                    request_timeout,
+                    retries,
+                    status
+                FROM services
+                WHERE url IS NOT NULL AND url != ''
+                ORDER BY position
+            """)
+            
+            services = cur.fetchall()
+    finally:
+        conn.close()
+    
+    if not services:
+        print("⚠️  Nenhum serviço encontrado no banco de dados")
+        sys.exit(0)
     
     failed = []
     for service in services:
-        name = service.get('Name', 'Unknown')
-        url = service.get('URL', '').strip()
+        name = service['name']
+        url = service['url']
         
         if not url:
             continue
-            
-        if not check_and_report(name, url, previous_state):
+        
+        # Preparar configurações do serviço
+        service_config = (
+            service['id'],
+            url,
+            service['heartbeat_interval'] or DEFAULT_HEARTBEAT_INTERVAL,
+            service['request_timeout'] or DEFAULT_REQUEST_TIMEOUT,
+            service['retries'] or DEFAULT_RETRIES
+        )
+        
+        if not check_and_report(name, url, previous_state, service_config):
             failed.append(name)
             current_state[name] = 'down'
         else:
@@ -248,8 +347,7 @@ def main():
     print(f"Total: {len(services)} | Failed: {len(failed)}")
     if failed:
         print(f"Failed services: {', '.join(failed)}")
-    print(f"Next check in {HEARTBEAT_INTERVAL} seconds")
-    print(f"{'='*60}\\n")
+    print(f"{'='*60}\n")
     
     sys.exit(len(failed))
 
