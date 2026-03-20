@@ -310,13 +310,33 @@ export default function ServiceList({ services }) {
       {services && services.length > 0 && services.filter(service => !service.group_id || service.group_id === 0).length > 0 ? (
         services
           .filter(service => !service.group_id || service.group_id === 0)
+          .sort((a, b) => {
+            // Definir ordem customizada
+            const order = ['lighthouse', 'lia', 'cca', 'spot', 'spm', 'sp manager', 'skylift'];
+            const aName = a.name ? a.name.toLowerCase() : '';
+            const bName = b.name ? b.name.toLowerCase() : '';
+            
+            const aIndex = order.findIndex(name => aName.includes(name));
+            const bIndex = order.findIndex(name => bName.includes(name));
+            
+            // Se ambos estão na lista, ordenar pela posição
+            if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+            // Se apenas um está na lista, ele vem primeiro
+            if (aIndex !== -1) return -1;
+            if (bIndex !== -1) return 1;
+            // Se nenhum está na lista, manter ordem original
+            return 0;
+          })
           .map((service) => {
             // Determinar qual logo usar baseado no nome do serviço
             let logoSrc = null;
+            let displayName = service.name;
             const serviceName = service.name ? service.name.toLowerCase() : '';
             
             if (serviceName.includes('lighthouse')) {
               logoSrc = '/lighthouse-logo.png';
+            } else if (serviceName.includes('lia')) {
+              logoSrc = '/lia-logo.png';
             } else if (serviceName.includes('cca')) {
               logoSrc = '/cca-logo.png';
             } else if (serviceName.includes('skylift')) {
@@ -325,6 +345,10 @@ export default function ServiceList({ services }) {
               logoSrc = '/spot-logo.png';
             } else if (serviceName.includes('spm') || serviceName.includes('sp manager')) {
               logoSrc = '/spm-logo.png';
+              // Renomear SPM para SP Manager
+              if (serviceName === 'spm') {
+                displayName = 'SP Manager';
+              }
             }
             
             return (
@@ -334,14 +358,14 @@ export default function ServiceList({ services }) {
                     <div className="flex items-center gap-3">
                       <img 
                         src={logoSrc} 
-                        alt={service.name} 
+                        alt={displayName} 
                         className="h-10 w-auto"
                         style={{ objectFit: 'contain' }}
                       />
-                      <h3 className="text-lg font-semibold">{service.name}</h3>
+                      <h3 className="text-lg font-semibold">{displayName}</h3>
                     </div>
                   ) : (
-                    <h3 className="text-lg font-semibold">{service.name}</h3>
+                    <h3 className="text-lg font-semibold">{displayName}</h3>
                   )}
                 </div>
 
