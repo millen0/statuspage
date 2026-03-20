@@ -23,3 +23,5 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+backend/.env
+frontend/*/.env.production
