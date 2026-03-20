@@ -63,6 +63,7 @@ def send_maintenance_email(maintenance, subscribers):
         
         # Substituir conteúdo no template
         html_body = template.replace('{{MAINTENANCE_CONTENT}}', maintenance_content)
+        html_body = html_body.replace('{{UNSUBSCRIBE_TOKEN}}', token)
         
         try:
             context = ssl.create_default_context()
