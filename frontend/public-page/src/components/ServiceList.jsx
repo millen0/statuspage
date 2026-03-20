@@ -310,36 +310,54 @@ export default function ServiceList({ services }) {
       {services && services.length > 0 && services.filter(service => !service.group_id || service.group_id === 0).length > 0 ? (
         services
           .filter(service => !service.group_id || service.group_id === 0)
-          .map((service) => (
-          <div key={service.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-            <div className="mb-4">
-              {service.name && service.name.toLowerCase().includes('lighthouse') ? (
-                <div className="flex items-center gap-3">
-                  <img 
-                    src="/lighthouse-logo.png" 
-                    alt="Lighthouse" 
-                    className="h-10 w-auto"
-                    style={{ objectFit: 'contain' }}
-                  />
-                  <h3 className="text-lg font-semibold">{service.name}</h3>
+          .map((service) => {
+            // Determinar qual logo usar baseado no nome do serviço
+            let logoSrc = null;
+            const serviceName = service.name ? service.name.toLowerCase() : '';
+            
+            if (serviceName.includes('lighthouse')) {
+              logoSrc = '/lighthouse-logo.png';
+            } else if (serviceName.includes('cca')) {
+              logoSrc = '/cca-logo.png';
+            } else if (serviceName.includes('skylift')) {
+              logoSrc = '/skylift-logo.png';
+            } else if (serviceName.includes('spot')) {
+              logoSrc = '/spot-logo.png';
+            } else if (serviceName.includes('spm') || serviceName.includes('sp manager')) {
+              logoSrc = '/spm-logo.png';
+            }
+            
+            return (
+              <div key={service.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                <div className="mb-4">
+                  {logoSrc ? (
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={logoSrc} 
+                        alt={service.name} 
+                        className="h-10 w-auto"
+                        style={{ objectFit: 'contain' }}
+                      />
+                      <h3 className="text-lg font-semibold">{service.name}</h3>
+                    </div>
+                  ) : (
+                    <h3 className="text-lg font-semibold">{service.name}</h3>
+                  )}
                 </div>
-              ) : (
-                <h3 className="text-lg font-semibold">{service.name}</h3>
-              )}
-            </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <span>91 days ago</span>
-                <span className="font-medium">{calculateOverallUptime(service.id)}% uptime</span>
-                <span>Today</span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>91 days ago</span>
+                    <span className="font-medium">{calculateOverallUptime(service.id)}% uptime</span>
+                    <span>Today</span>
+                  </div>
+                  <div className="flex gap-0.5">
+                    {generateUptimeBars(service.id)}
+                  </div>
+                </div>
               </div>
-              <div className="flex gap-0.5">
-                {generateUptimeBars(service.id)}
-              </div>
-            </div>
-          </div>
-        ))
+            );
+          })
       ) : null}
       
       {/* Render Service Groups last */}
