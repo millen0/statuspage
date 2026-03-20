@@ -312,15 +312,20 @@ export default function ServiceList({ services }) {
           .filter(service => !service.group_id || service.group_id === 0)
           .map((service) => (
           <div key={service.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-            <div className="mb-4 flex items-center gap-2">
-              {service.name && service.name.toLowerCase().includes('lighthouse') && (
-                <img 
-                  src="/lighthouse-logo.svg" 
-                  alt="Lighthouse" 
-                  className="w-6 h-6"
-                />
+            <div className="mb-4">
+              {service.name && service.name.toLowerCase().includes('lighthouse') ? (
+                <div className="flex items-center gap-3">
+                  <img 
+                    src="/lighthouse-logo.png" 
+                    alt="Lighthouse" 
+                    className="h-10 w-auto"
+                    style={{ objectFit: 'contain' }}
+                  />
+                  <h3 className="text-lg font-semibold">{service.name}</h3>
+                </div>
+              ) : (
+                <h3 className="text-lg font-semibold">{service.name}</h3>
               )}
-              <h3 className="text-lg font-semibold">{service.name}</h3>
             </div>
 
             <div className="space-y-2">
