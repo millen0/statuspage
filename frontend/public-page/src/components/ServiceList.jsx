@@ -56,19 +56,8 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
         <h3 className="text-lg font-semibold">{group.display_name}</h3>
       </div>
 
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <span>91 days ago</span>
-          <span className="font-medium">{calculateOverallUptime(group.virtual_service_id)}% uptime</span>
-          <span>Today</span>
-        </div>
-        <div className="flex gap-0.5">
-          {generateUptimeBars(group.virtual_service_id, false)}
-        </div>
-      </div>
-
       {isExpanded && (
-        <div className="mt-6 space-y-4 pl-7 border-l-2 border-gray-200">
+        <div className="space-y-4 pl-7 border-l-2 border-gray-200">
           {members.map(member => (
             <div key={member.id} className="space-y-2">
               <div className="text-sm font-medium text-gray-700">{member.name}</div>
