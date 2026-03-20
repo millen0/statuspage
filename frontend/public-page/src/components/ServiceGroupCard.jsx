@@ -68,22 +68,24 @@ export default function ServiceGroupCard({ group, uptimeData, incidentsData }) {
       const isFirstDay = i === 90;
       const isLastDay = i === 0;
       
-      const barElement = <div className={`h-8 ${statusColors[status]} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} ${showTooltip ? 'cursor-pointer hover:opacity-80' : ''} transition-opacity`} />;
-      
-      bars.push(
-        showTooltip ? (
+      if (showTooltip) {
+        bars.push(
           <UptimeTooltip
             key={`${serviceId}-${dateStr}`}
             date={dateStr}
             uptimePercentage={uptimePercentage}
             incidents={dayIncidents}
           >
-            {barElement}
+            <div className={`h-8 ${statusColors[status]} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} cursor-pointer hover:opacity-80 transition-opacity`} />
           </UptimeTooltip>
-        ) : (
-          <div key={`${serviceId}-${dateStr}`}>{barElement}</div>
-        )
-      );
+        );
+      } else {
+        bars.push(
+          <div key={`${serviceId}-${dateStr}`} className="flex-1">
+            <div className={`h-8 ${statusColors[status]} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} transition-opacity`} />
+          </div>
+        );
+      }
     }
     return bars;
   };
