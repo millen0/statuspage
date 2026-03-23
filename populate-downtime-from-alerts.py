@@ -68,6 +68,7 @@ def populate_downtime_history():
     # Formato: (service_name, date, downtime_minutes, description)
     downtimes = [
         ('lighthouse-backend', '2025-02-15', 120, 'Request failed with status code 503'),
+        ('AUTH', '2026-03-09', 1, 'Service Status Changed: operational -> outage -> operational'),
         # Adicione mais downtimes aqui conforme necessário
         # ('outro-servico', '2025-02-15', 30, 'Descrição do problema'),
     ]
