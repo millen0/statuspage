@@ -297,15 +297,21 @@ func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request)
 		}
 
 		// Buscar incidentes deste dia para este serviço
+		// Extrair apenas YYYY-MM-DD da string de data
+		dateOnly := day.Date
+		if len(day.Date) > 10 {
+			dateOnly = day.Date[:10] // Pega apenas YYYY-MM-DD
+		}
+		
 		incidentRows, incErr := h.DB.Query(`
 			SELECT i.title, i.description, i.severity,
 				EXTRACT(EPOCH FROM (COALESCE(i.resolved_at, NOW()) - i.created_at))/60 as duration_minutes
 			FROM incidents i
 			WHERE i.service_id = $1
-			AND i.uptime_date = DATE($2::timestamp)
+			AND i.uptime_date = $2
 			AND i.is_visible = true
 			ORDER BY i.created_at DESC
-		`, serviceID, day.Date)
+		`, serviceID, dateOnly)
 
 		if incErr == nil {
 			for incidentRows.Next() {
