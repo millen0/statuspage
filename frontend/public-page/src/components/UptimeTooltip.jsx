@@ -78,23 +78,16 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
                 </div>
               ) : (
                 <>
-                  {(downtime.hours > 0 || downtime.minutes > 0) && (
-                    <div className="text-yellow-400 font-medium">
-                      Downtime: {downtime.hours > 0 && `${downtime.hours} ${downtime.hours === 1 ? 'hr' : 'hrs'}`}{downtime.hours > 0 && downtime.minutes > 0 && ' '}{downtime.minutes > 0 && `${downtime.minutes} ${downtime.minutes === 1 ? 'min' : 'mins'}`}
-                    </div>
-                  )}
-
-                  {hasIncidents && (
-                    <div className="mt-3 pt-3 border-t border-gray-700">
-                      <div className="text-gray-400 text-xs mb-2">Incident Details</div>
+                  {hasIncidents ? (
+                    <div className="space-y-2">
                       {incidents.map((incident, idx) => (
-                        <div key={idx} className="mb-3 last:mb-0">
+                        <div key={idx} className="">
                           <div className="text-white font-medium mb-1">{incident.title}</div>
                           {incident.description && (
-                            <div className="text-gray-300 text-xs mb-1">{incident.description}</div>
+                            <div className="text-gray-300 text-sm">{incident.description}</div>
                           )}
                           {incident.severity && (
-                            <div className="text-xs text-gray-400">
+                            <div className="text-xs text-gray-400 mt-1">
                               {incident.severity === 'critical' && '🔴 Critical'}
                               {incident.severity === 'major' && '🟠 Major'}
                               {incident.severity === 'minor' && '🟡 Minor'}
@@ -104,6 +97,12 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
                         </div>
                       ))}
                     </div>
+                  ) : (
+                    (downtime.hours > 0 || downtime.minutes > 0) && (
+                      <div className="text-yellow-400 font-medium">
+                        Downtime: {downtime.hours > 0 && `${downtime.hours} ${downtime.hours === 1 ? 'hr' : 'hrs'}`}{downtime.hours > 0 && downtime.minutes > 0 && ' '}{downtime.minutes > 0 && `${downtime.minutes} ${downtime.minutes === 1 ? 'min' : 'mins'}`}
+                      </div>
+                    )
                   )}
                 </>
               )}
