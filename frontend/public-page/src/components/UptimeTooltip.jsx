@@ -78,14 +78,9 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
                 </div>
               ) : (
                 <>
-                  {downtime.hours > 0 && (
+                  {(downtime.hours > 0 || downtime.minutes > 0) && (
                     <div className="text-yellow-400 font-medium">
-                      {downtime.hours} {downtime.hours === 1 ? 'hr' : 'hrs'}
-                    </div>
-                  )}
-                  {downtime.minutes > 0 && (
-                    <div className="text-yellow-400 font-medium">
-                      {downtime.minutes} {downtime.minutes === 1 ? 'min' : 'mins'}
+                      Downtime: {downtime.hours > 0 && `${downtime.hours} ${downtime.hours === 1 ? 'hr' : 'hrs'}`}{downtime.hours > 0 && downtime.minutes > 0 && ' '}{downtime.minutes > 0 && `${downtime.minutes} ${downtime.minutes === 1 ? 'min' : 'mins'}`}
                     </div>
                   )}
 
@@ -108,15 +103,6 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
                           )}
                         </div>
                       ))}
-                    </div>
-                  )}
-
-                  {!hasIncidents && (downtime.hours > 0 || downtime.minutes > 0) && (
-                    <div className="mt-2 text-gray-400 text-xs">
-                      {uptimePercentage < 50 ? 'Major Outage' : 
-                       uptimePercentage < 95 ? 'Partial Outage' : 
-                       uptimePercentage < 99 ? 'Degraded Performance' : 
-                       'Minor Issues'}
                     </div>
                   )}
                 </>

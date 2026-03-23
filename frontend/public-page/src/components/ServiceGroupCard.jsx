@@ -69,6 +69,9 @@ export default function ServiceGroupCard({ group, uptimeData, incidentsData }) {
       const isLastDay = i === 0;
       const hasProblems = uptimePercentage < 100 || dayIncidents.length > 0;
       
+      // Se tem problemas, usar vermelho; senão usar a cor do status
+      const barColor = hasProblems ? 'bg-red-500' : statusColors[status];
+      
       if (showTooltip) {
         bars.push(
           <UptimeTooltip
@@ -77,13 +80,13 @@ export default function ServiceGroupCard({ group, uptimeData, incidentsData }) {
             uptimePercentage={uptimePercentage}
             incidents={dayIncidents}
           >
-            <div className={`h-8 ${statusColors[status]} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} ${hasProblems ? 'border-t-2 border-red-500' : ''} cursor-pointer hover:opacity-80 transition-opacity`} />
+            <div className={`h-8 ${barColor} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} cursor-pointer hover:opacity-80 transition-opacity`} />
           </UptimeTooltip>
         );
       } else {
         bars.push(
           <div key={`${serviceId}-${dateStr}`} className="flex-1">
-            <div className={`h-8 ${statusColors[status]} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} ${hasProblems ? 'border-t-2 border-red-500' : ''} transition-opacity`} />
+            <div className={`h-8 ${barColor} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} transition-opacity`} />
           </div>
         );
       }
