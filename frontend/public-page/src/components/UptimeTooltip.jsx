@@ -67,6 +67,11 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
             <div className="relative z-10">
               <div className="font-semibold mb-2 text-white">{formatDate(date)}</div>
               
+              {/* Red bar for problems */}
+              {(uptimePercentage < 100 || hasIncidents) && (
+                <div className="w-full h-1 bg-red-500 rounded-full mb-3"></div>
+              )}
+              
               {uptimePercentage >= 100 && !hasIncidents ? (
                 <div className="text-gray-300">
                   No downtime recorded on this day.
