@@ -297,23 +297,25 @@ func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request)
 		}
 
 		// Buscar incidentes deste dia para este serviço
-		incidentRows, _ := h.DB.Query(`
+		incidentRows, incErr := h.DB.Query(`
 			SELECT i.title, i.description, i.severity,
 				EXTRACT(EPOCH FROM (COALESCE(i.resolved_at, NOW()) - i.created_at))/60 as duration_minutes
 			FROM incidents i
 			WHERE i.service_id = $1
-			AND (DATE(i.created_at) = DATE($2::timestamp) OR i.uptime_date = DATE($2::timestamp))
+			AND i.uptime_date = DATE($2::timestamp)
 			AND i.is_visible = true
 			ORDER BY i.created_at DESC
 		`, serviceID, day.Date)
 
-		for incidentRows.Next() {
-			var incident IncidentInfo
-			if err := incidentRows.Scan(&incident.Title, &incident.Description, &incident.Severity, &incident.Duration); err == nil {
-				day.Incidents = append(day.Incidents, incident)
+		if incErr == nil {
+			for incidentRows.Next() {
+				var incident IncidentInfo
+				if err := incidentRows.Scan(&incident.Title, &incident.Description, &incident.Severity, &incident.Duration); err == nil {
+					day.Incidents = append(day.Incidents, incident)
+				}
 			}
+			incidentRows.Close()
 		}
-		incidentRows.Close()
 
 		// Buscar downtimes automáticos deste dia
 		downtimeRows, _ := h.DB.Query(`
