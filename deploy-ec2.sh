@@ -9,7 +9,8 @@ cd /opt/statuspage
 
 # Atualizar código do GitHub
 echo "📥 Pulling latest code..."
-git pull
+git fetch --all
+git reset --hard origin/master
 
 # Executar migrações do banco
 echo "🗄️ Running database migrations..."

@@ -67,6 +67,7 @@ export default function ServiceGroupCard({ group, uptimeData, incidentsData }) {
       
       const isFirstDay = i === 90;
       const isLastDay = i === 0;
+      const hasProblems = uptimePercentage < 100 || dayIncidents.length > 0;
       
       if (showTooltip) {
         bars.push(
@@ -76,13 +77,13 @@ export default function ServiceGroupCard({ group, uptimeData, incidentsData }) {
             uptimePercentage={uptimePercentage}
             incidents={dayIncidents}
           >
-            <div className={`h-8 ${statusColors[status]} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} cursor-pointer hover:opacity-80 transition-opacity`} />
+            <div className={`h-8 ${statusColors[status]} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} ${hasProblems ? 'border-t-2 border-red-500' : ''} cursor-pointer hover:opacity-80 transition-opacity`} />
           </UptimeTooltip>
         );
       } else {
         bars.push(
           <div key={`${serviceId}-${dateStr}`} className="flex-1">
-            <div className={`h-8 ${statusColors[status]} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} transition-opacity`} />
+            <div className={`h-8 ${statusColors[status]} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} ${hasProblems ? 'border-t-2 border-red-500' : ''} transition-opacity`} />
           </div>
         );
       }
