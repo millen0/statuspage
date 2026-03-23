@@ -278,10 +278,10 @@ func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request)
 	defer rows.Close()
 
 	type IncidentInfo struct {
-		Title       string `json:"title"`
-		Description string `json:"description"`
-		Severity    string `json:"severity"`
-		Duration    int    `json:"duration_minutes"`
+		Title       string  `json:"title"`
+		Description string  `json:"description"`
+		Severity    string  `json:"severity"`
+		Duration    float64 `json:"duration_minutes"`
 	}
 
 	type UptimeDay struct {
