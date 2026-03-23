@@ -302,7 +302,7 @@ func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request)
 				EXTRACT(EPOCH FROM (COALESCE(i.resolved_at, NOW()) - i.created_at))/60 as duration_minutes
 			FROM incidents i
 			WHERE i.service_id = $1
-			AND DATE(i.created_at) = $2
+			AND (DATE(i.created_at) = DATE($2::timestamp) OR i.uptime_date = DATE($2::timestamp))
 			AND i.is_visible = true
 			ORDER BY i.created_at DESC
 		`, serviceID, day.Date)
