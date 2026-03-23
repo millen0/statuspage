@@ -14,7 +14,16 @@ export default function ServicesArea() {
   const fetchServices = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/area/services`);
-      setServices(res.data || []);
+      const sortedServices = (res.data || []).sort((a, b) => {
+        // Visible services first (true = 1, false = 0)
+        // Sort by is_visible descending (true before false)
+        if (a.is_visible === b.is_visible) {
+          // If same visibility, sort by name
+          return a.name.localeCompare(b.name);
+        }
+        return b.is_visible - a.is_visible;
+      });
+      setServices(sortedServices);
     } catch (error) {
       console.error('Error:', error);
     } finally {
