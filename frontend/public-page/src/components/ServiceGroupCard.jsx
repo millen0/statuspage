@@ -98,7 +98,15 @@ export default function ServiceGroupCard({ group, uptimeData, incidentsData }) {
     const uptimeLogs = uptimeData[serviceId] || [];
     if (uptimeLogs.length === 0) return '100.0';
     
-    const avgUptime = uptimeLogs.reduce((sum, log) => sum + parseFloat(log.uptime_percentage), 0) / uptimeLogs.length;
+    // Calcular média considerando todos os 91 dias
+    // Dias sem log = 100% uptime
+    const totalDays = 91;
+    const totalUptime = uptimeLogs.reduce((sum, log) => sum + parseFloat(log.uptime_percentage), 0);
+    const daysWithLogs = uptimeLogs.length;
+    const daysWithoutLogs = totalDays - daysWithLogs;
+    const totalUptimeWithPerfectDays = totalUptime + (daysWithoutLogs * 100);
+    
+    const avgUptime = totalUptimeWithPerfectDays / totalDays;
     return avgUptime.toFixed(1);
   };
 

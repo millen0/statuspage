@@ -4,11 +4,6 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
 
-  // Debug: ver o que está vindo nos incidents
-  if (incidents && incidents.length > 0) {
-    console.log('Incidents for date', date, incidents);
-  }
-
   const formatDate = (dateStr) => {
     // Extrair apenas a parte da data (YYYY-MM-DD) e criar data local
     const [year, month, day] = dateStr.split('T')[0].split('-');
