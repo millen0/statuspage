@@ -27,7 +27,16 @@ export default function Services() {
   const fetchServices = async () => {
     try {
       const response = await getServices();
-      setServices(response.data || []);
+      const sortedServices = (response.data || []).sort((a, b) => {
+        // Visible services first (true = 1, false = 0)
+        // Sort by is_visible descending (true before false)
+        if (a.is_visible === b.is_visible) {
+          // If same visibility, sort by name
+          return a.name.localeCompare(b.name);
+        }
+        return b.is_visible - a.is_visible;
+      });
+      setServices(sortedServices);
     } catch (error) {
       console.error('Error fetching services:', error);
       setServices([]);
