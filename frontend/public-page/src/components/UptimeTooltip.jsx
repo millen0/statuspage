@@ -52,7 +52,7 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
             transform: 'translate(-50%, -100%)'
           }}
         >
-          <div className="bg-gray-900 text-white text-sm rounded-lg shadow-2xl p-4 min-w-[250px] max-w-[350px] border border-gray-700">
+          <div className="bg-gray-900 text-white text-sm rounded-lg shadow-2xl p-4 min-w-[280px] max-w-[450px] border border-gray-700">
             {/* Arrow */}
             <div
               className="absolute w-3 h-3 bg-gray-900 border-r border-b border-gray-700 transform rotate-45"
@@ -79,15 +79,15 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
               ) : (
                 <>
                   {hasIncidents ? (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {incidents.map((incident, idx) => (
                         <div key={idx} className="">
-                          <div className="text-white font-medium mb-1">{incident.title}</div>
+                          <div className="text-white font-medium mb-2">{incident.title}</div>
                           {incident.description && (
-                            <div className="text-gray-300 text-sm">{incident.description}</div>
+                            <div className="text-gray-300 text-sm leading-relaxed">{incident.description}</div>
                           )}
                           {incident.severity && (
-                            <div className="text-xs text-gray-400 mt-1">
+                            <div className="text-xs text-gray-400 mt-2">
                               {incident.severity === 'critical' && '🔴 Critical'}
                               {incident.severity === 'major' && '🟠 Major'}
                               {incident.severity === 'minor' && '🟡 Minor'}
