@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
+	"log"
 	"net/http"
 	"statuspage/models"
 	"strconv"
@@ -303,6 +304,8 @@ func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request)
 			dateOnly = day.Date[:10] // Pega apenas YYYY-MM-DD
 		}
 		
+		log.Printf("DEBUG: Querying incidents for service_id=%s, date=%s (original: %s)", serviceID, dateOnly, day.Date)
+		
 		incidentRows, incErr := h.DB.Query(`
 			SELECT i.title, i.description, i.severity,
 				EXTRACT(EPOCH FROM (COALESCE(i.resolved_at, NOW()) - i.created_at))/60 as duration_minutes
@@ -312,14 +315,23 @@ func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request)
 			AND i.is_visible = true
 			ORDER BY i.created_at DESC
 		`, serviceID, dateOnly)
+		
+		if incErr != nil {
+			log.Printf("ERROR querying incidents: %v", incErr)
+		}
 
 		if incErr == nil {
+			incidentCount := 0
 			for incidentRows.Next() {
 				var incident IncidentInfo
 				if err := incidentRows.Scan(&incident.Title, &incident.Description, &incident.Severity, &incident.Duration); err == nil {
 					day.Incidents = append(day.Incidents, incident)
+					incidentCount++
+				} else {
+					log.Printf("ERROR scanning incident: %v", err)
 				}
 			}
+			log.Printf("DEBUG: Found %d incidents for date %s", incidentCount, dateOnly)
 			incidentRows.Close()
 		}
 
