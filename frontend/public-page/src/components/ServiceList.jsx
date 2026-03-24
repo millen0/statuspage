@@ -40,59 +40,15 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
   const isPlatform = (group.display_name || group.name || '').toLowerCase().includes('platform');
 
   const toggleExpand = async () => {
-    if (!membersLoaded) {
-      try {
-        const res = await axios.get(`${API_URL}/public/service-groups/${group.id}/members`);
-        const membersList = res.data || [];
-        setMembers(membersList);
-        setMembersLoaded(true);
-        
-        // Fetch uptime for each member
-        const uptimePromises = membersList.map(async (member) => {
-          try {
-            const uptimeRes = await axios.get(`${API_URL}/public/services/${member.id}/uptime`);
-            return { serviceId: member.id, data: uptimeRes.data || [] };
-          } catch (error) {
-            console.error(`Error fetching uptime for member ${member.id}:`, error);
-            return { serviceId: member.id, data: [] };
-          }
-        });
-        
-        const results = await Promise.all(uptimePromises);
-        const newUptimeData = { ...uptimeData };
-        const newIncidentsData = { ...incidentsData };
-        
-        results.forEach(result => {
-          newUptimeData[result.serviceId] = result.data;
-          
-          // Extrair incidents dos dados de uptime dos membros
-          const incidentsByDate = {};
-          result.data.forEach(day => {
-            const dateStr = day.date.split('T')[0];
-            if (day.incidents && day.incidents.length > 0) {
-              incidentsByDate[dateStr] = day.incidents;
-            }
-          });
-          newIncidentsData[result.serviceId] = incidentsByDate;
-        });
-        
-        // Calcular uptime agregado do grupo
-        const aggregatedData = calculateGroupAggregatedData(results);
-        newUptimeData[-group.id] = aggregatedData.uptimeData;
-        newIncidentsData[-group.id] = aggregatedData.incidentsData;
-        
-        setUptimeData(newUptimeData);
-        setIncidentsData(prev => ({ ...prev, ...newIncidentsData }));
-      } catch (error) {
-        console.error('Error fetching group members:', error);
-      }
-    }
     setIsExpanded(!isExpanded);
   };
   
   // Calcular uptime e incidents agregados do grupo
   const calculateGroupAggregatedData = (uptimeResults) => {
+    console.log('calculateGroupAggregatedData called for group:', group.display_name, 'with results:', uptimeResults);
+    
     if (!uptimeResults || uptimeResults.length === 0) {
+      console.log('No uptime results for group:', group.display_name);
       return { uptimeData: [], incidentsData: {} };
     }
     
@@ -139,6 +95,8 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
       }
     });
     
+    console.log('Group', group.display_name, 'aggregated data:', { uptimeData, incidentsData });
+    
     return { uptimeData, incidentsData };
   };
   
@@ -164,30 +122,35 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
           });
           
           const results = await Promise.all(uptimePromises);
-          const newUptimeData = { ...uptimeData };
-          const newIncidentsData = { ...incidentsData };
-          
-          results.forEach(result => {
-            newUptimeData[result.serviceId] = result.data;
-            
-            // Extrair incidents dos dados de uptime dos membros
-            const incidentsByDate = {};
-            result.data.forEach(day => {
-              const dateStr = day.date.split('T')[0];
-              if (day.incidents && day.incidents.length > 0) {
-                incidentsByDate[dateStr] = day.incidents;
-              }
-            });
-            newIncidentsData[result.serviceId] = incidentsByDate;
-          });
           
           // Calcular uptime agregado do grupo
           const aggregatedData = calculateGroupAggregatedData(results);
-          newUptimeData[-group.id] = aggregatedData.uptimeData;
-          newIncidentsData[-group.id] = aggregatedData.incidentsData;
           
-          setUptimeData(newUptimeData);
-          setIncidentsData(prev => ({ ...prev, ...newIncidentsData }));
+          setUptimeData(prev => {
+            const newUptimeData = { ...prev };
+            results.forEach(result => {
+              newUptimeData[result.serviceId] = result.data;
+            });
+            newUptimeData[-group.id] = aggregatedData.uptimeData;
+            console.log('Setting uptime data for group', group.display_name, 'with key', -group.id, ':', aggregatedData.uptimeData);
+            return newUptimeData;
+          });
+          
+          setIncidentsData(prev => {
+            const newIncidentsData = { ...prev };
+            results.forEach(result => {
+              const incidentsByDate = {};
+              result.data.forEach(day => {
+                const dateStr = day.date.split('T')[0];
+                if (day.incidents && day.incidents.length > 0) {
+                  incidentsByDate[dateStr] = day.incidents;
+                }
+              });
+              newIncidentsData[result.serviceId] = incidentsByDate;
+            });
+            newIncidentsData[-group.id] = aggregatedData.incidentsData;
+            return newIncidentsData;
+          });
         } catch (error) {
           console.error('Error loading group members:', error);
         }
