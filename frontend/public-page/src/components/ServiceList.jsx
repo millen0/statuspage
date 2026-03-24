@@ -359,7 +359,7 @@ export default function ServiceList({ services }) {
           .filter(service => !service.group_id || service.group_id === 0)
           .sort((a, b) => {
             // Definir ordem customizada
-            const order = ['lighthouse', 'lia', 'cca', 'spot', 'spm', 'sp manager', 'skylift'];
+            const order = ['lighthouse', 'lia', 'cca', 'spot', 'spm', 'sp manager', 'skylift', 'space', 'autofix'];
             const aName = a.name ? a.name.toLowerCase() : '';
             const bName = b.name ? b.name.toLowerCase() : '';
             
@@ -390,6 +390,10 @@ export default function ServiceList({ services }) {
               logoSrc = '/skylift-logo.png';
             } else if (serviceName.includes('spot')) {
               logoSrc = '/spot-logo.png';
+            } else if (serviceName.includes('space')) {
+              logoSrc = '/space-logo.png';
+            } else if (serviceName.includes('autofix')) {
+              logoSrc = '/autofix-logo.png';
             } else if (serviceName.includes('spm') || serviceName.includes('sp manager')) {
               logoSrc = '/spm-logo.png';
               // Renomear SPM para SP Manager
