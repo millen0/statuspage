@@ -71,17 +71,14 @@ export default function App() {
       <header className="border-b border-gray-200 bg-white">
         <div className="max-w-5xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col items-center">
               <img 
                 src="/piercloud-logo.png" 
                 alt="Pier Cloud" 
-                className="h-12 w-auto"
+                className="h-16 w-auto mb-2"
                 style={{ objectFit: 'contain' }}
               />
-              <div>
-                <h1 className="text-2xl font-bold">Status</h1>
-                <p className="text-gray-600 mt-1">Service status and incident history</p>
-              </div>
+              <h1 className="text-lg font-semibold text-gray-800">Pier Cloud Platform Status Page</h1>
             </div>
             <button
               onClick={() => setShowSubscribeModal(true)}
@@ -182,4 +179,4 @@ export default function App() {
     </div>
   );
 }
-// Force rebuild 1774371769
+// Force rebuild 1774372500
