@@ -359,7 +359,7 @@ export default function ServiceList({ services }) {
           .filter(service => !service.group_id || service.group_id === 0)
           .sort((a, b) => {
             // Definir ordem customizada
-            const order = ['lighthouse', 'lia', 'cca', 'spot', 'spm', 'sp manager', 'skylift', 'space', 'autofix'];
+            const order = ['lighthouse', 'lia', 'space', 'cca', 'autofix', 'spot', 'spm', 'sp manager', 'skylift', 'platform'];
             const aName = a.name ? a.name.toLowerCase() : '';
             const bName = b.name ? b.name.toLowerCase() : '';
             
