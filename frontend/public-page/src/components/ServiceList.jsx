@@ -445,27 +445,19 @@ export default function ServiceList({ services }) {
         // Se tem incidents, usar a cor baseada na severidade
         const hasCritical = dayIncidents.some(i => i.severity === 'critical');
         const hasMajor = dayIncidents.some(i => i.severity === 'major');
+        const hasMinor = dayIncidents.some(i => i.severity === 'minor');
         
-        if (hasCritical || uptimePercentage < 50) {
-          barColor = 'bg-red-500'; // Major Outage
+        if (hasCritical || hasMajor || uptimePercentage < 50) {
+          barColor = 'bg-red-500'; // Major Outage - Vermelho
           status = 'outage';
-        } else if (hasMajor || uptimePercentage < 90) {
-          barColor = 'bg-orange-500'; // Partial Outage
-          status = 'degraded';
-        } else {
-          barColor = 'bg-yellow-500'; // Degraded Performance
+        } else if (hasMinor || uptimePercentage < 99) {
+          barColor = 'bg-yellow-500'; // Degraded Performance - Amarelo
           status = 'degraded';
         }
       } else if (uptimePercentage < 100) {
         // Sem incidents mas com downtime
-        if (uptimePercentage < 50) {
-          barColor = 'bg-red-500';
-          status = 'outage';
-        } else if (uptimePercentage < 90) {
-          barColor = 'bg-orange-500';
-          status = 'degraded';
-        } else {
-          barColor = 'bg-yellow-500';
+        if (uptimePercentage < 99) {
+          barColor = 'bg-yellow-500'; // Degraded Performance
           status = 'degraded';
         }
       }
@@ -731,4 +723,4 @@ export default function ServiceList({ services }) {
     </div>
   );
 }
-// Force rebuild 1774372900
+// Force rebuild 1774373000

@@ -90,11 +90,31 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
                               <div className="text-gray-300 text-xs leading-snug line-clamp-3">{incident.description}</div>
                             )}
                             {incident.severity && (
-                              <div className="text-xs text-gray-400 mt-1">
-                                {incident.severity === 'critical' && '🔴 Critical'}
-                                {incident.severity === 'major' && '🟠 Major'}
-                                {incident.severity === 'minor' && '🟡 Minor'}
-                                {incident.severity === 'info' && 'ℹ️ Info'}
+                              <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-1">
+                                {incident.severity === 'critical' && (
+                                  <>
+                                    <i className="fas fa-times text-red-500"></i>
+                                    <span>Critical</span>
+                                  </>
+                                )}
+                                {incident.severity === 'major' && (
+                                  <>
+                                    <i className="fas fa-times text-red-500"></i>
+                                    <span>Major</span>
+                                  </>
+                                )}
+                                {incident.severity === 'minor' && (
+                                  <>
+                                    <i className="fas fa-minus-square text-yellow-500"></i>
+                                    <span>Minor</span>
+                                  </>
+                                )}
+                                {incident.severity === 'info' && (
+                                  <>
+                                    <i className="fas fa-info-circle text-blue-500"></i>
+                                    <span>Info</span>
+                                  </>
+                                )}
                               </div>
                             )}
                           </div>
@@ -117,4 +137,4 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
     </div>
   );
 }
-// Force rebuild 1774372100
+// Force rebuild 1774373000
