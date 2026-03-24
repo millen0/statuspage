@@ -62,7 +62,7 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
             <div key={member.id} className="space-y-2">
               <div className="text-sm font-medium text-gray-700">{member.name}</div>
               <div className="flex items-center justify-between text-xs text-gray-500">
-                <span>91 days ago</span>
+                <span>90 days ago</span>
                 <span className="font-medium">{calculateOverallUptime(member.id)}% uptime</span>
                 <span>Today</span>
               </div>
@@ -219,7 +219,7 @@ export default function ServiceList({ services }) {
     const serviceIncidents = incidentsData[serviceId] || {};
     const bars = [];
     
-    // Gerar últimos 91 dias (do mais antigo para o mais recente)
+    // Gerar últimos 90 dias (do mais antigo para o mais recente)
     // Usar data local do navegador, não UTC
     const today = new Date();
     const year = today.getFullYear();
@@ -227,7 +227,7 @@ export default function ServiceList({ services }) {
     const day = today.getDate();
     const localToday = new Date(year, month, day); // Data local sem hora
     
-    for (let i = 90; i >= 0; i--) {
+    for (let i = 89; i >= 0; i--) {
       const date = new Date(localToday);
       date.setDate(date.getDate() - i);
       
@@ -254,7 +254,7 @@ export default function ServiceList({ services }) {
         status = 'degraded';
       }
       
-      const isFirstDay = i === 90;
+      const isFirstDay = i === 89;
       const isLastDay = i === 0;
       const hasProblems = uptimePercentage < 100 || dayIncidents.length > 0;
       
@@ -412,7 +412,7 @@ export default function ServiceList({ services }) {
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span>91 days ago</span>
+                    <span>90 days ago</span>
                     <span className="font-medium">{calculateOverallUptime(service.id)}% uptime</span>
                     <span>Today</span>
                   </div>
