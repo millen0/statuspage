@@ -370,6 +370,23 @@ export default function ServiceList({ services }) {
             let displayName = service.name;
             const serviceName = service.name ? service.name.toLowerCase() : '';
             
+            // Definir descrições para serviços específicos
+            const serviceDescriptions = {
+              'auth': 'Handles user authentication across the platform. If unavailable, users may be unable to log in or maintain authenticated sessions.',
+              'lake': 'Responsible for data processing and retrieval used across the platform. Issues may cause delays or failures in data loading, analytics, or workspaces.',
+              'login': 'Manages the user login flow and access to the platform. If impacted, users may be unable to sign in or access their accounts.',
+              'websocket': 'Enables real-time updates and interactions within the platform. If degraded, some features may respond slower or update with delays, but core functionality remains available.',
+              'hub notification': 'Manages the delivery of notifications and alerts across the platform. If impacted, users may experience delays or failures in receiving notifications, but core platform functionality remains unaffected.'
+            };
+            
+            // Verificar se o serviço tem descrição
+            let serviceDescription = null;
+            Object.keys(serviceDescriptions).forEach(key => {
+              if (serviceName.includes(key)) {
+                serviceDescription = serviceDescriptions[key];
+              }
+            });
+            
             if (serviceName.includes('lighthouse')) {
               logoSrc = '/lighthouse-logo.png';
             } else if (serviceName.includes('lia')) {
@@ -404,9 +421,47 @@ export default function ServiceList({ services }) {
                         style={{ objectFit: 'contain' }}
                       />
                       <h3 className="text-lg font-semibold">{displayName}</h3>
+                      {serviceDescription && (
+                        <div className="relative group ml-1">
+                          <svg 
+                            viewBox="64 64 896 896" 
+                            width="1em" 
+                            height="1em" 
+                            fill="currentColor" 
+                            className="text-gray-400 hover:text-gray-600 cursor-help w-4 h-4"
+                          >
+                            <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z"></path>
+                            <path d="M464 336a48 48 0 1096 0 48 48 0 10-96 0zm72 112h-48c-4.4 0-8 3.6-8 8v272c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V456c0-4.4-3.6-8-8-8z"></path>
+                          </svg>
+                          <div className="absolute left-0 top-6 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-lg">
+                            <div className="absolute -top-1 left-2 w-2 h-2 bg-gray-900 transform rotate-45"></div>
+                            {serviceDescription}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <h3 className="text-lg font-semibold">{displayName}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold">{displayName}</h3>
+                      {serviceDescription && (
+                        <div className="relative group">
+                          <svg 
+                            viewBox="64 64 896 896" 
+                            width="1em" 
+                            height="1em" 
+                            fill="currentColor" 
+                            className="text-gray-400 hover:text-gray-600 cursor-help w-4 h-4"
+                          >
+                            <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z"></path>
+                            <path d="M464 336a48 48 0 1096 0 48 48 0 10-96 0zm72 112h-48c-4.4 0-8 3.6-8 8v272c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V456c0-4.4-3.6-8-8-8z"></path>
+                          </svg>
+                          <div className="absolute left-0 top-6 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-lg">
+                            <div className="absolute -top-1 left-2 w-2 h-2 bg-gray-900 transform rotate-45"></div>
+                            {serviceDescription}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
 
