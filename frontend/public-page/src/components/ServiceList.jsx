@@ -132,6 +132,7 @@ export default function ServiceList({ services }) {
               : `${API_URL}/public/services/${item.id}/uptime`;
             
             const res = await axios.get(endpoint);
+            console.log(`Uptime data for service ${item.id} (${item.name}):`, res.data);
             return { serviceId: item.id, data: res.data || [] };
           } catch (error) {
             console.error(`Error fetching uptime for ${item.name}:`, error);
@@ -284,41 +285,27 @@ export default function ServiceList({ services }) {
 
   const calculateOverallUptime = (serviceId) => {
     const uptimeLogs = uptimeData[serviceId] || [];
-    console.log(`Service ${serviceId} uptime logs:`, uptimeLogs.length, uptimeLogs);
     
-    // Criar mapa de uptime por data
-    const uptimeByDate = {};
+    if (uptimeLogs.length === 0) return '100.00';
+    
+    // Calcular média baseado apenas nos dias retornados pelo backend
+    let totalUptime = 0;
     uptimeLogs.forEach(log => {
-      const dateStr = log.date.split('T')[0];
-      uptimeByDate[dateStr] = parseFloat(log.uptime_percentage);
+      totalUptime += parseFloat(log.uptime_percentage);
     });
     
-    // Calcular uptime para os últimos 91 dias
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
-    const day = today.getDate();
-    const localToday = new Date(year, month, day);
+    const avgUptime = totalUptime / uptimeLogs.length;
     
-    let totalUptime = 0;
-    const totalDays = 91;
-    
-    for (let i = 90; i >= 0; i--) {
-      const date = new Date(localToday);
-      date.setDate(date.getDate() - i);
-      
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const dateStr = `${year}-${month}-${day}`;
-      
-      // Se tem log para este dia, usar o valor; senão considerar 100%
-      const dayUptime = uptimeByDate[dateStr] !== undefined ? uptimeByDate[dateStr] : 100;
-      totalUptime += dayUptime;
+    // Log para debug
+    const daysWithIssues = uptimeLogs.filter(log => log.uptime_percentage < 100);
+    if (daysWithIssues.length > 0) {
+      console.log(`Service ${serviceId} - Days with issues:`, daysWithIssues.map(d => ({
+        date: d.date.split('T')[0],
+        uptime: d.uptime_percentage
+      })));
     }
+    console.log(`Service ${serviceId} - Total days: ${uptimeLogs.length}, Days with issues: ${daysWithIssues.length}, Calculated uptime: ${avgUptime.toFixed(2)}%`);
     
-    const avgUptime = totalUptime / totalDays;
-    console.log(`Service ${serviceId} calculated uptime: ${avgUptime.toFixed(2)}% (${Object.keys(uptimeByDate).length} days with logs)`);
     return avgUptime.toFixed(2);
   };
 
