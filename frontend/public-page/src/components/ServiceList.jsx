@@ -149,6 +149,7 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
               newIncidentsData[result.serviceId] = incidentsByDate;
             });
             newIncidentsData[-group.id] = aggregatedData.incidentsData;
+            console.log('Setting incidents data for group', group.display_name, 'with key', -group.id, ':', aggregatedData.incidentsData);
             return newIncidentsData;
           });
         } catch (error) {
@@ -395,6 +396,11 @@ export default function ServiceList({ services }) {
     const uptimeLogs = uptimeData[serviceId] || [];
     const serviceIncidents = incidentsData[serviceId] || {};
     const bars = [];
+    
+    // Debug log
+    if (Object.keys(serviceIncidents).length > 0) {
+      console.log(`Service ${serviceId} has incidents:`, serviceIncidents);
+    }
     
     // Gerar últimos 90 dias (do mais antigo para o mais recente)
     // Usar data local do navegador, não UTC
@@ -695,3 +701,4 @@ export default function ServiceList({ services }) {
     </div>
   );
 }
+// Force rebuild 1774372200

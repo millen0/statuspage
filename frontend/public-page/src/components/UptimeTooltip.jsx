@@ -16,6 +16,7 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
     const downtimeMinutes = Math.round((100 - uptimePercentage) * 14.4); // 1440 minutes in a day
     const hours = Math.floor(downtimeMinutes / 60);
     const minutes = downtimeMinutes % 60;
+    console.log(`Calculating downtime for ${uptimePercentage}% uptime: ${downtimeMinutes} minutes (${hours}h ${minutes}m)`);
     return { hours, minutes };
   };
 
@@ -80,22 +81,25 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
                 <>
                   {hasIncidents ? (
                     <div className="space-y-2">
-                      {incidents.map((incident, idx) => (
-                        <div key={idx} className="">
-                          <div className="text-white font-medium mb-1 text-xs">{incident.title}</div>
-                          {incident.description && (
-                            <div className="text-gray-300 text-xs leading-snug line-clamp-3">{incident.description}</div>
-                          )}
-                          {incident.severity && (
-                            <div className="text-xs text-gray-400 mt-1">
-                              {incident.severity === 'critical' && '🔴 Critical'}
-                              {incident.severity === 'major' && '🟠 Major'}
-                              {incident.severity === 'minor' && '🟡 Minor'}
-                              {incident.severity === 'info' && 'ℹ️ Info'}
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                      {incidents.map((incident, idx) => {
+                        console.log('Rendering incident:', incident);
+                        return (
+                          <div key={idx} className="">
+                            <div className="text-white font-medium mb-1 text-xs">{incident.title}</div>
+                            {incident.description && (
+                              <div className="text-gray-300 text-xs leading-snug line-clamp-3">{incident.description}</div>
+                            )}
+                            {incident.severity && (
+                              <div className="text-xs text-gray-400 mt-1">
+                                {incident.severity === 'critical' && '🔴 Critical'}
+                                {incident.severity === 'major' && '🟠 Major'}
+                                {incident.severity === 'minor' && '🟡 Minor'}
+                                {incident.severity === 'info' && 'ℹ️ Info'}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     (downtime.hours > 0 || downtime.minutes > 0) && (
@@ -113,3 +117,4 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
     </div>
   );
 }
+// Force rebuild 1774372100
