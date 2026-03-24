@@ -86,9 +86,9 @@ export default function App() {
 
       <main className="max-w-5xl mx-auto px-4 py-8">
         {/* About this Page */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-          <h3 className="text-lg font-semibold text-blue-900 mb-3">About this Page</h3>
-          <p className="text-sm text-blue-800 leading-relaxed">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-8">
+          <h3 className="text-lg font-semibold text-gray-800 mb-3">About this Page</h3>
+          <p className="text-sm text-gray-700 leading-relaxed">
             Welcome to Pier Cloud Platform status page. Any interruptions to our regular service will be posted here. 
             If you are experiencing issues accessing Pier Cloud and do not see any notice on this page, please contact 
             our support team by submitting a ticket at:{' '}
@@ -96,7 +96,7 @@ export default function App() {
               href="https://lighthouse.piercloud.com.br/tickets" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="font-medium underline hover:text-blue-600"
+              className="font-medium text-blue-600 underline hover:text-blue-800"
             >
               lighthouse.piercloud.com.br/tickets
             </a>
