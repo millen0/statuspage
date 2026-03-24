@@ -71,7 +71,7 @@ export default function App() {
       <header className="border-b border-gray-200 bg-white">
         <div className="max-w-5xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col">
               <img 
                 src="/piercloud-logo.png" 
                 alt="Pier Cloud" 
@@ -179,4 +179,4 @@ export default function App() {
     </div>
   );
 }
-// Force rebuild 1774372500
+// Force rebuild 1774372600

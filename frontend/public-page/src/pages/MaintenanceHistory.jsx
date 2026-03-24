@@ -59,14 +59,16 @@ export default function MaintenanceHistory() {
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <header className="border-b border-gray-200 bg-white">
         <div className="max-w-5xl mx-auto px-4 py-6">
-          <div className="flex flex-col items-center">
-            <img 
-              src="/piercloud-logo.png" 
-              alt="Pier Cloud" 
-              className="h-16 w-auto mb-2"
-              style={{ objectFit: 'contain' }}
-            />
-            <h1 className="text-lg font-semibold text-gray-800">Pier Cloud Platform Status Page</h1>
+          <div className="flex items-center">
+            <div className="flex flex-col">
+              <img 
+                src="/piercloud-logo.png" 
+                alt="Pier Cloud" 
+                className="h-16 w-auto mb-2"
+                style={{ objectFit: 'contain' }}
+              />
+              <h1 className="text-lg font-semibold text-gray-800">Pier Cloud Platform Status Page</h1>
+            </div>
           </div>
         </div>
       </header>
