@@ -323,8 +323,19 @@ export default function ServiceList({ services }) {
         // Process uptime data and extract incidents
         setUptimeData(prevData => {
           const newUptimeMap = { ...prevData };
+          
+          // Preservar dados de grupos (IDs negativos)
+          const groupUptime = {};
+          Object.keys(prevData).forEach(key => {
+            const numKey = parseInt(key);
+            if (numKey < 0) {
+              groupUptime[key] = prevData[key];
+            }
+          });
+          
+          // Processar dados de serviços
           results.forEach(result => {
-            if (newUptimeMap[result.serviceId]) {
+            if (newUptimeMap[result.serviceId] && result.serviceId > 0) {
               const existingData = newUptimeMap[result.serviceId];
               const mergedData = [...result.data];
               
@@ -342,16 +353,31 @@ export default function ServiceList({ services }) {
               });
               
               newUptimeMap[result.serviceId] = mergedData;
-            } else {
+            } else if (result.serviceId > 0) {
               newUptimeMap[result.serviceId] = result.data;
             }
           });
+          
+          // Restaurar dados de grupos
+          Object.assign(newUptimeMap, groupUptime);
+          
           return newUptimeMap;
         });
 
         // Extract incidents from uptime data
         setIncidentsData(prevData => {
           const newIncidentsMap = { ...prevData };
+          
+          // Preservar dados de grupos (IDs negativos)
+          const groupIncidents = {};
+          Object.keys(prevData).forEach(key => {
+            const numKey = parseInt(key);
+            if (numKey < 0) {
+              groupIncidents[key] = prevData[key];
+            }
+          });
+          
+          // Adicionar novos dados de serviços
           results.forEach(result => {
             const incidentsByDate = {};
             result.data.forEach(day => {
@@ -362,6 +388,10 @@ export default function ServiceList({ services }) {
             });
             newIncidentsMap[result.serviceId] = incidentsByDate;
           });
+          
+          // Restaurar dados de grupos
+          Object.assign(newIncidentsMap, groupIncidents);
+          
           return newIncidentsMap;
         });
       };
@@ -723,4 +753,4 @@ export default function ServiceList({ services }) {
     </div>
   );
 }
-// Force rebuild 1774373000
+// Force rebuild 1774373100
