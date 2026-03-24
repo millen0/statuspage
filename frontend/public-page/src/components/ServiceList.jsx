@@ -445,16 +445,12 @@ export default function ServiceList({ services }) {
 
   return (
     <div className={`grid grid-cols-${gridColumns} gap-4 mb-8`}>
-      {/* Render Service Groups (Platform por último) */}
+      {/* Render Service Groups */}
       {serviceGroups
         .sort((a, b) => {
-          const order = ['lighthouse', 'lia', 'space', 'cca', 'autofix', 'spot', 'spm', 'sp manager', 'skylift'];
+          const order = ['lighthouse', 'lia', 'space', 'cca', 'autofix', 'spot', 'spm', 'sp manager', 'skylift', 'platform'];
           const aName = (a.display_name || a.name || '').toLowerCase();
           const bName = (b.display_name || b.name || '').toLowerCase();
-          
-          // Platform sempre por último
-          if (aName.includes('platform')) return 1;
-          if (bName.includes('platform')) return -1;
           
           const aIndex = order.findIndex(name => aName.includes(name));
           const bIndex = order.findIndex(name => bName.includes(name));
