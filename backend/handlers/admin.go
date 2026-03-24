@@ -560,10 +560,11 @@ func (h *AdminHandler) UpdateIncident(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Buscar status anterior
-	var oldStatus string
-	h.DB.QueryRow("SELECT status FROM incidents WHERE id = $1", id).Scan(&oldStatus)
+	// Buscar dados anteriores
+	var oldStatus, oldSeverity string
+	h.DB.QueryRow("SELECT status, severity FROM incidents WHERE id = $1", id).Scan(&oldStatus, &oldSeverity)
 
+	// Atualizar incident
 	_, err := h.DB.Exec(
 		"UPDATE incidents SET title=$1, description=$2, severity=$3, status=$4, service_id=$5, is_visible=$6, updated_at=$7 WHERE id=$8",
 		i.Title, i.Description, i.Severity, i.Status, i.ServiceID, i.IsVisible, time.Now(), id,
@@ -574,9 +575,35 @@ func (h *AdminHandler) UpdateIncident(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Se o status mudou, enviar notificação
+	// Se o status mudou para resolved, atualizar resolved_at
+	if oldStatus != "resolved" && i.Status == "resolved" {
+		h.DB.Exec("UPDATE incidents SET resolved_at = $1 WHERE id = $2", time.Now(), id)
+	}
+
+	// Se o status mudou, criar um update automático
 	if oldStatus != i.Status {
-		sendSlackIncidentUpdate(i.Title, "Status changed from "+oldStatus+" to "+i.Status, i.Status)
+		var updateMessage string
+		switch i.Status {
+		case "resolved":
+			updateMessage = "This incident has been resolved."
+		case "monitoring":
+			updateMessage = "The issue has been fixed and we are monitoring the results."
+		case "identified":
+			updateMessage = "The issue has been identified and a fix is being implemented."
+		case "investigating":
+			updateMessage = "We are investigating this issue."
+		default:
+			updateMessage = "Status changed from " + oldStatus + " to " + i.Status
+		}
+		
+		// Criar update na timeline
+		h.DB.Exec(
+			"INSERT INTO incident_updates (incident_id, message, status) VALUES ($1, $2, $3)",
+			id, updateMessage, i.Status,
+		)
+		
+		// Enviar notificação ao Slack
+		sendSlackIncidentUpdate(i.Title, updateMessage, i.Status)
 	}
 
 	i.ID = id
