@@ -146,6 +146,17 @@ func (h *PublicHandler) GetMaintenances(w http.ResponseWriter, r *http.Request) 
 		if err := rows.Scan(&m.ID, &m.Title, &m.Description, &m.Status, &m.ScheduledStart, &m.ScheduledEnd, &m.ActualStart, &m.ActualEnd, &m.CreatedAt, &m.UpdatedAt); err != nil {
 			continue
 		}
+		
+		// Buscar updates do maintenance
+		updateRows, _ := h.DB.Query("SELECT id, maintenance_id, message, status, created_at FROM maintenance_updates WHERE maintenance_id = $1 ORDER BY created_at DESC", m.ID)
+		for updateRows.Next() {
+			var u models.MaintenanceUpdate
+			if err := updateRows.Scan(&u.ID, &u.MaintenanceID, &u.Message, &u.Status, &u.CreatedAt); err == nil {
+				m.Updates = append(m.Updates, u)
+			}
+		}
+		updateRows.Close()
+		
 		maintenances = append(maintenances, m)
 	}
 

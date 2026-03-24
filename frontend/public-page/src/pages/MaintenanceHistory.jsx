@@ -23,7 +23,27 @@ export default function MaintenanceHistory() {
   }, []);
 
   const formatDate = (date) => {
-    return new Date(date).toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+    const d = new Date(date);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')} UTC`;
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'completed': return 'Completed';
+      case 'in_progress': return 'In Progress';
+      case 'scheduled': return 'Scheduled';
+      default: return 'Update';
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'completed': return 'text-green-600';
+      case 'in_progress': return 'text-yellow-600';
+      case 'scheduled': return 'text-blue-600';
+      default: return 'text-gray-600';
+    }
   };
 
   const groupMaintenancesByMonth = (maintenances) => {
@@ -95,24 +115,102 @@ export default function MaintenanceHistory() {
               {groupedMaintenances.map(([monthKey, monthData]) => (
                 <div key={monthKey} className="px-6 py-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">{monthData.name}</h3>
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {monthData.maintenances.map((maintenance) => (
-                      <div key={maintenance.id} className="border-l-4 border-blue-500 pl-4 py-2">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900">{maintenance.title}</h4>
-                            <span className="inline-block mt-1 px-2 py-1 text-xs font-medium rounded border bg-blue-100 text-blue-800 border-blue-300">
-                              completed
-                            </span>
-                          </div>
-                          <div className="text-xs text-gray-500 ml-4">
-                            {formatDate(maintenance.scheduled_end)}
-                          </div>
+                      <div key={maintenance.id} className="bg-white border border-gray-200 rounded-lg p-6">
+                        {/* Título do Maintenance */}
+                        <div className="mb-4">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-2">{maintenance.title}</h4>
+                          <span className="inline-block px-2 py-1 text-xs font-medium rounded border bg-green-100 text-green-800 border-green-300">
+                            completed
+                          </span>
                         </div>
-                        <p className="text-sm text-gray-700 mt-2">{maintenance.description}</p>
-                        <div className="mt-2 text-xs text-gray-600">
-                          <div><span className="font-medium">Start:</span> {formatDate(maintenance.scheduled_start)}</div>
-                          <div><span className="font-medium">End:</span> {formatDate(maintenance.scheduled_end)}</div>
+
+                        {/* Timeline de Updates */}
+                        <div className="space-y-3">
+                          {/* Status Completed */}
+                          {maintenance.status === 'completed' && (
+                            <div className="border-l-2 border-green-500 pl-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <span className={`font-semibold ${getStatusColor('completed')}`}>
+                                    {getStatusLabel('completed')}
+                                  </span>
+                                  <span className="text-gray-500 text-sm ml-2">-</span>
+                                  <span className="text-gray-700 text-sm ml-2">
+                                    Maintenance has been completed.
+                                  </span>
+                                </div>
+                                <span className="text-xs text-gray-500 ml-4 whitespace-nowrap">
+                                  {formatDate(maintenance.actual_end || maintenance.scheduled_end)}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Updates (ordem reversa - mais recente primeiro) */}
+                          {maintenance.updates && maintenance.updates.length > 0 && (
+                            maintenance.updates.map((update) => (
+                              <div key={update.id} className="border-l-2 border-gray-300 pl-4">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <span className={`font-semibold ${getStatusColor(update.status)}`}>
+                                      {getStatusLabel(update.status)}
+                                    </span>
+                                    <span className="text-gray-500 text-sm ml-2">-</span>
+                                    <span className="text-gray-700 text-sm ml-2">
+                                      {update.message}
+                                    </span>
+                                  </div>
+                                  <span className="text-xs text-gray-500 ml-4 whitespace-nowrap">
+                                    {formatDate(update.created_at)}
+                                  </span>
+                                </div>
+                              </div>
+                            ))
+                          )}
+
+                          {/* Status In Progress (se houver) */}
+                          {maintenance.actual_start && (
+                            <div className="border-l-2 border-yellow-500 pl-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <span className={`font-semibold ${getStatusColor('in_progress')}`}>
+                                    {getStatusLabel('in_progress')}
+                                  </span>
+                                  <span className="text-gray-500 text-sm ml-2">-</span>
+                                  <span className="text-gray-700 text-sm ml-2">
+                                    Maintenance is currently in progress.
+                                  </span>
+                                </div>
+                                <span className="text-xs text-gray-500 ml-4 whitespace-nowrap">
+                                  {formatDate(maintenance.actual_start)}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Status Inicial (Scheduled) */}
+                          <div className="border-l-2 border-blue-500 pl-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <span className={`font-semibold ${getStatusColor('scheduled')}`}>
+                                  {getStatusLabel('scheduled')}
+                                </span>
+                                <span className="text-gray-500 text-sm ml-2">-</span>
+                                <span className="text-gray-700 text-sm ml-2">
+                                  {maintenance.description}
+                                </span>
+                              </div>
+                              <span className="text-xs text-gray-500 ml-4 whitespace-nowrap">
+                                {formatDate(maintenance.created_at)}
+                              </span>
+                            </div>
+                            <div className="mt-2 text-xs text-gray-600">
+                              <div><span className="font-medium">Scheduled Start:</span> {formatDate(maintenance.scheduled_start)}</div>
+                              <div><span className="font-medium">Scheduled End:</span> {formatDate(maintenance.scheduled_end)}</div>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ))}

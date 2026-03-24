@@ -676,6 +676,24 @@ func (h *AdminHandler) GetMaintenances(w http.ResponseWriter, r *http.Request) {
 		if err := rows.Scan(&m.ID, &m.Title, &m.Description, &m.Status, &m.ScheduledStart, &m.ScheduledEnd, &m.ActualStart, &m.ActualEnd, &m.SendEmail, &m.EmailSent, &m.EmailScheduledTime, &m.CreatedAt, &m.UpdatedAt); err != nil {
 			continue
 		}
+		
+		// Buscar updates do maintenance
+		updateRows, err := h.DB.Query(`
+			SELECT id, maintenance_id, message, status, created_at 
+			FROM maintenance_updates 
+			WHERE maintenance_id = $1 
+			ORDER BY created_at DESC
+		`, m.ID)
+		if err == nil {
+			defer updateRows.Close()
+			for updateRows.Next() {
+				var u models.MaintenanceUpdate
+				if err := updateRows.Scan(&u.ID, &u.MaintenanceID, &u.Message, &u.Status, &u.CreatedAt); err == nil {
+					m.Updates = append(m.Updates, u)
+				}
+			}
+		}
+		
 		maintenances = append(maintenances, m)
 	}
 
@@ -758,6 +776,36 @@ func (h *AdminHandler) UpdateMaintenance(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Se o status mudou, criar um update automático
+	if oldStatus != m.Status {
+		var updateMessage string
+		switch m.Status {
+		case "scheduled":
+			updateMessage = "Maintenance has been scheduled."
+		case "in_progress":
+			updateMessage = "Maintenance is currently in progress."
+			h.DB.Exec("UPDATE maintenances SET actual_start = $1 WHERE id = $2", time.Now(), id)
+		case "completed":
+			updateMessage = "Maintenance has been completed."
+			h.DB.Exec("UPDATE maintenances SET actual_end = $1 WHERE id = $2", time.Now(), id)
+		default:
+			updateMessage = "Status changed from " + oldStatus + " to " + m.Status
+		}
+		
+		// Criar update na timeline
+		h.DB.Exec(
+			"INSERT INTO maintenance_updates (maintenance_id, message, status) VALUES ($1, $2, $3)",
+			id, updateMessage, m.Status,
+		)
+		
+		// Enviar notificação ao Slack
+		if m.Status == "completed" {
+			sendSlackMaintenanceAlert(m, true)
+		} else if m.Status == "in_progress" {
+			sendSlackMaintenanceAlert(m, false)
+		}
+	}
+
 	// Enviar email se marcado, ainda não foi enviado E horário chegou
 	if m.SendEmail && !emailSent {
 		if m.EmailScheduledTime == nil {
@@ -779,14 +827,6 @@ func (h *AdminHandler) UpdateMaintenance(w http.ResponseWriter, r *http.Request)
 		m.EmailSent = emailSent
 	}
 
-	// Se mudou para completed, enviar notificação
-	if oldStatus != "completed" && m.Status == "completed" {
-		sendSlackMaintenanceAlert(m, true)
-	} else if oldStatus == "scheduled" && m.Status == "in_progress" {
-		// Notificar quando começa
-		sendSlackMaintenanceAlert(m, false)
-	}
-
 	m.ID = id
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(m)
@@ -803,6 +843,41 @@ func (h *AdminHandler) DeleteMaintenance(w http.ResponseWriter, r *http.Request)
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *AdminHandler) AddMaintenanceUpdate(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	maintenanceID, _ := strconv.Atoi(vars["id"])
+
+	var u models.MaintenanceUpdate
+	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err := h.DB.QueryRow(
+		"INSERT INTO maintenance_updates (maintenance_id, message, status) VALUES ($1, $2, $3) RETURNING id, created_at",
+		maintenanceID, u.Message, u.Status,
+	).Scan(&u.ID, &u.CreatedAt)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Buscar título do maintenance
+	var maintenanceTitle string
+	h.DB.QueryRow("SELECT title FROM maintenances WHERE id = $1", maintenanceID).Scan(&maintenanceTitle)
+
+	// Enviar update ao Slack
+	var m models.Maintenance
+	m.Title = maintenanceTitle
+	m.Status = u.Status
+	sendSlackMaintenanceAlert(m, false)
+
+	u.MaintenanceID = maintenanceID
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(u)
 }
 
 // Subscribers

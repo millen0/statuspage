@@ -85,6 +85,7 @@ func main() {
 	admin.HandleFunc("/maintenances", adminHandler.CreateMaintenance).Methods("POST")
 	admin.HandleFunc("/maintenances/{id}", adminHandler.UpdateMaintenance).Methods("PUT")
 	admin.HandleFunc("/maintenances/{id}", adminHandler.DeleteMaintenance).Methods("DELETE")
+	admin.HandleFunc("/maintenances/{id}/updates", adminHandler.AddMaintenanceUpdate).Methods("POST")
 
 	admin.HandleFunc("/subscribers", adminHandler.GetSubscribers).Methods("GET")
 	admin.HandleFunc("/subscribers/{id}", adminHandler.DeleteSubscriber).Methods("DELETE")
