@@ -306,10 +306,10 @@ export default function ServiceList({ services }) {
     }
     console.log(`Service ${serviceId} - Total days: ${uptimeLogs.length}, Days with issues: ${daysWithIssues.length}, Calculated uptime: ${avgUptime}%`);
     
-    // Se o uptime for >= 99.99%, mostrar 3 casas decimais para evidenciar pequenas diferenças
-    // Caso contrário, mostrar 2 casas decimais
-    if (avgUptime >= 99.99 && avgUptime < 100) {
-      return avgUptime.toFixed(3);
+    // Se teve problemas, usar floor para não arredondar para cima
+    // Caso contrário, usar toFixed normal
+    if (daysWithIssues.length > 0) {
+      return (Math.floor(avgUptime * 100) / 100).toFixed(2);
     }
     return avgUptime.toFixed(2);
   };
