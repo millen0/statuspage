@@ -144,11 +144,58 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
   
   // Auto-carregar membros ao montar o componente
   useEffect(() => {
-    if (!membersLoaded) {
-      toggleExpand();
-      setIsExpanded(false);
-    }
-  }, []);
+    const loadMembers = async () => {
+      if (!membersLoaded) {
+        try {
+          const res = await axios.get(`${API_URL}/public/service-groups/${group.id}/members`);
+          const membersList = res.data || [];
+          setMembers(membersList);
+          setMembersLoaded(true);
+          
+          // Fetch uptime for each member
+          const uptimePromises = membersList.map(async (member) => {
+            try {
+              const uptimeRes = await axios.get(`${API_URL}/public/services/${member.id}/uptime`);
+              return { serviceId: member.id, data: uptimeRes.data || [] };
+            } catch (error) {
+              console.error(`Error fetching uptime for member ${member.id}:`, error);
+              return { serviceId: member.id, data: [] };
+            }
+          });
+          
+          const results = await Promise.all(uptimePromises);
+          const newUptimeData = { ...uptimeData };
+          const newIncidentsData = { ...incidentsData };
+          
+          results.forEach(result => {
+            newUptimeData[result.serviceId] = result.data;
+            
+            // Extrair incidents dos dados de uptime dos membros
+            const incidentsByDate = {};
+            result.data.forEach(day => {
+              const dateStr = day.date.split('T')[0];
+              if (day.incidents && day.incidents.length > 0) {
+                incidentsByDate[dateStr] = day.incidents;
+              }
+            });
+            newIncidentsData[result.serviceId] = incidentsByDate;
+          });
+          
+          // Calcular uptime agregado do grupo
+          const aggregatedData = calculateGroupAggregatedData(results);
+          newUptimeData[-group.id] = aggregatedData.uptimeData;
+          newIncidentsData[-group.id] = aggregatedData.incidentsData;
+          
+          setUptimeData(newUptimeData);
+          setIncidentsData(prev => ({ ...prev, ...newIncidentsData }));
+        } catch (error) {
+          console.error('Error loading group members:', error);
+        }
+      }
+    };
+    
+    loadMembers();
+  }, [group.id]);
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
