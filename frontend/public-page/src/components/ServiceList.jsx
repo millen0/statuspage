@@ -40,7 +40,7 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
   const isPlatform = (group.display_name || group.name || '').toLowerCase().includes('platform');
 
   const toggleExpand = async () => {
-    if (!isExpanded && !membersLoaded) {
+    if (!membersLoaded) {
       try {
         const res = await axios.get(`${API_URL}/public/service-groups/${group.id}/members`);
         const membersList = res.data || [];
@@ -76,11 +76,13 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
           newIncidentsData[result.serviceId] = incidentsByDate;
         });
         
+        // Calcular uptime agregado do grupo
+        const aggregatedData = calculateGroupAggregatedData(results);
+        newUptimeData[-group.id] = aggregatedData.uptimeData;
+        newIncidentsData[-group.id] = aggregatedData.incidentsData;
+        
         setUptimeData(newUptimeData);
         setIncidentsData(prev => ({ ...prev, ...newIncidentsData }));
-        
-        // Calcular uptime agregado do grupo
-        calculateGroupAggregatedUptime(membersList, results);
       } catch (error) {
         console.error('Error fetching group members:', error);
       }
@@ -89,8 +91,10 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
   };
   
   // Calcular uptime e incidents agregados do grupo
-  const calculateGroupAggregatedUptime = (membersList, uptimeResults) => {
-    if (!membersList || membersList.length === 0) return;
+  const calculateGroupAggregatedData = (uptimeResults) => {
+    if (!uptimeResults || uptimeResults.length === 0) {
+      return { uptimeData: [], incidentsData: {} };
+    }
     
     // Criar mapa de datas com uptime agregado
     const dateMap = {};
@@ -116,35 +120,35 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
     });
     
     // Calcular média de uptime por dia e agregar incidents
-    const aggregatedData = Object.keys(dateMap).map(dateStr => {
+    const uptimeData = Object.keys(dateMap).map(dateStr => {
       const dayData = dateMap[dateStr];
       const avgUptime = dayData.uptimes.reduce((sum, val) => sum + val, 0) / dayData.uptimes.length;
       
       return {
         date: dayData.date,
-        uptime_percentage: avgUptime,
-        incidents: dayData.incidents
+        uptime_percentage: avgUptime
       };
-    });
+    }).sort((a, b) => a.date.localeCompare(b.date));
     
-    // Salvar dados agregados do grupo
-    const newUptimeData = { ...uptimeData };
-    newUptimeData[-group.id] = aggregatedData;
-    setUptimeData(newUptimeData);
-    
-    // Salvar incidents agregados
-    const groupIncidentsByDate = {};
-    aggregatedData.forEach(day => {
-      const dateStr = day.date.split('T')[0];
-      if (day.incidents && day.incidents.length > 0) {
-        groupIncidentsByDate[dateStr] = day.incidents;
+    // Criar mapa de incidents por data
+    const incidentsData = {};
+    Object.keys(dateMap).forEach(dateStr => {
+      const dayData = dateMap[dateStr];
+      if (dayData.incidents.length > 0) {
+        incidentsData[dateStr] = dayData.incidents;
       }
     });
     
-    const newIncidentsData = { ...incidentsData };
-    newIncidentsData[-group.id] = groupIncidentsByDate;
-    setIncidentsData(prev => ({ ...prev, ...newIncidentsData }));
+    return { uptimeData, incidentsData };
   };
+  
+  // Auto-carregar membros ao montar o componente
+  useEffect(() => {
+    if (!membersLoaded) {
+      toggleExpand();
+      setIsExpanded(false);
+    }
+  }, []);
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
