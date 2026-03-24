@@ -175,6 +175,7 @@ export default function App() {
                 </svg>
               </button>
             </div>
+            <p className="text-sm text-gray-600 mb-4">Receive email notifications whenever there is maintenance on the Pier Cloud platform.</p>
             <SubscribeForm />
           </div>
         </div>
