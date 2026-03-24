@@ -19,6 +19,22 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
     'hub notification': 'Manages the delivery of notifications and alerts across the platform. If impacted, users may experience delays or failures in receiving notifications, but core platform functionality remains unaffected.',
     'hub-notification': 'Manages the delivery of notifications and alerts across the platform. If impacted, users may experience delays or failures in receiving notifications, but core platform functionality remains unaffected.'
   };
+  
+  // Determinar qual logo usar baseado no nome do grupo
+  const getGroupLogo = (groupName) => {
+    const name = groupName ? groupName.toLowerCase() : '';
+    if (name.includes('lighthouse')) return '/lighthouse-logo.png';
+    if (name.includes('lia')) return '/lia-logo.png';
+    if (name.includes('cca')) return '/cca-logo.png';
+    if (name.includes('skylift')) return '/skylift-logo.png';
+    if (name.includes('spot')) return '/spot-logo.png';
+    if (name.includes('space')) return '/space-logo.png';
+    if (name.includes('autofix')) return '/autofix-logo.png';
+    if (name.includes('spm') || name.includes('sp manager')) return '/spm-logo.png';
+    return null;
+  };
+  
+  const logoSrc = getGroupLogo(group.display_name || group.name);
 
   const toggleExpand = async () => {
     if (!isExpanded && !membersLoaded) {
@@ -54,20 +70,47 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-      <div className="flex items-center gap-2 cursor-pointer mb-4" onClick={toggleExpand}>
-        <svg 
-          className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-        <h3 className="text-lg font-semibold">{group.display_name}</h3>
+      <div className="cursor-pointer" onClick={toggleExpand}>
+        <div className="flex items-center gap-2 mb-4">
+          <svg 
+            className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+          {logoSrc ? (
+            <div className="flex items-center gap-3">
+              <img 
+                src={logoSrc} 
+                alt={group.display_name} 
+                className="h-10 w-auto"
+                style={{ objectFit: 'contain' }}
+              />
+              <h3 className="text-lg font-semibold">{group.display_name}</h3>
+            </div>
+          ) : (
+            <h3 className="text-lg font-semibold">{group.display_name}</h3>
+          )}
+        </div>
+        
+        {!isExpanded && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>90 days ago</span>
+              <span className="font-medium">{calculateOverallUptime(-group.id)}% uptime</span>
+              <span>Today</span>
+            </div>
+            <div className="flex gap-0.5">
+              {generateUptimeBars(-group.id)}
+            </div>
+          </div>
+        )}
       </div>
 
       {isExpanded && (
-        <div className="space-y-4 pl-7 border-l-2 border-gray-200">
+        <div className="space-y-4 pl-7 border-l-2 border-gray-200 mt-4">
           {members.map(member => {
             const memberName = member.name ? member.name.toLowerCase() : '';
             let memberDescription = null;
@@ -385,7 +428,35 @@ export default function ServiceList({ services }) {
 
   return (
     <div className={`grid grid-cols-${gridColumns} gap-4 mb-8`}>
-      {/* Render Services first (hide those with group_id) */}
+      {/* Render Service Groups first in order */}
+      {serviceGroups
+        .sort((a, b) => {
+          const order = ['lighthouse', 'lia', 'space', 'cca', 'autofix', 'spot', 'spm', 'sp manager', 'skylift', 'platform'];
+          const aName = (a.display_name || a.name || '').toLowerCase();
+          const bName = (b.display_name || b.name || '').toLowerCase();
+          
+          const aIndex = order.findIndex(name => aName.includes(name));
+          const bIndex = order.findIndex(name => bName.includes(name));
+          
+          if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+          if (aIndex !== -1) return -1;
+          if (bIndex !== -1) return 1;
+          return 0;
+        })
+        .map((group) => (
+          <ServiceGroupCard
+            key={`group-${group.id}`}
+            group={{ ...group, virtual_service_id: -group.id }}
+            uptimeData={uptimeData}
+            setUptimeData={setUptimeData}
+            incidentsData={incidentsData}
+            generateUptimeBars={generateUptimeBars}
+            calculateOverallUptime={calculateOverallUptime}
+            statusColors={statusColors}
+          />
+        ))}
+      
+      {/* Render Services (hide those with group_id) */}
       {services && services.length > 0 && services.filter(service => !service.group_id || service.group_id === 0).length > 0 ? (
         services
           .filter(service => !service.group_id || service.group_id === 0)
@@ -521,20 +592,6 @@ export default function ServiceList({ services }) {
             );
           })
       ) : null}
-      
-      {/* Render Service Groups last */}
-      {serviceGroups.map((group) => (
-        <ServiceGroupCard
-          key={`group-${group.id}`}
-          group={{ ...group, virtual_service_id: -group.id }}
-          uptimeData={uptimeData}
-          setUptimeData={setUptimeData}
-          incidentsData={incidentsData}
-          generateUptimeBars={generateUptimeBars}
-          calculateOverallUptime={calculateOverallUptime}
-          statusColors={statusColors}
-        />
-      ))}
     </div>
   );
 }
