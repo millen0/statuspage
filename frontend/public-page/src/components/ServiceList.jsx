@@ -5,7 +5,7 @@ import UptimeTooltip from './UptimeTooltip';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 // Service Group Card Component (inline)
-function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, generateUptimeBars, calculateOverallUptime, statusColors }) {
+function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, setIncidentsData, generateUptimeBars, calculateOverallUptime, statusColors }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [members, setMembers] = useState([]);
   const [membersLoaded, setMembersLoaded] = useState(false);
@@ -576,6 +576,7 @@ export default function ServiceList({ services }) {
                 uptimeData={uptimeData}
                 setUptimeData={setUptimeData}
                 incidentsData={incidentsData}
+                setIncidentsData={setIncidentsData}
                 generateUptimeBars={generateUptimeBars}
                 calculateOverallUptime={calculateOverallUptime}
                 statusColors={statusColors}
@@ -701,4 +702,4 @@ export default function ServiceList({ services }) {
     </div>
   );
 }
-// Force rebuild 1774372200
+// Force rebuild 1774372800
