@@ -378,6 +378,13 @@ export default function ServiceList({ services }) {
     }
   }, [displayMode, services, serviceGroups]);
 
+  const statusIcons = {
+    operational: 'fas fa-check text-green-500',
+    degraded: 'fas fa-minus-square text-yellow-500',
+    outage: 'fas fa-times text-red-500',
+    maintenance: 'fas fa-wrench text-blue-500'
+  };
+
   const statusColors = {
     operational: 'bg-green-500',
     degraded: 'bg-yellow-500',
@@ -431,18 +438,40 @@ export default function ServiceList({ services }) {
       let status = 'operational';
       const uptimePercentage = log ? log.uptime_percentage : 100;
       
-      if (uptimePercentage < 50) {
-        status = 'outage';
-      } else if (uptimePercentage < 99) {
-        status = 'degraded';
+      // Determinar cor baseada no uptime e incidents
+      let barColor = statusColors.operational;
+      
+      if (dayIncidents.length > 0) {
+        // Se tem incidents, usar a cor baseada na severidade
+        const hasCritical = dayIncidents.some(i => i.severity === 'critical');
+        const hasMajor = dayIncidents.some(i => i.severity === 'major');
+        
+        if (hasCritical || uptimePercentage < 50) {
+          barColor = 'bg-red-500'; // Major Outage
+          status = 'outage';
+        } else if (hasMajor || uptimePercentage < 90) {
+          barColor = 'bg-orange-500'; // Partial Outage
+          status = 'degraded';
+        } else {
+          barColor = 'bg-yellow-500'; // Degraded Performance
+          status = 'degraded';
+        }
+      } else if (uptimePercentage < 100) {
+        // Sem incidents mas com downtime
+        if (uptimePercentage < 50) {
+          barColor = 'bg-red-500';
+          status = 'outage';
+        } else if (uptimePercentage < 90) {
+          barColor = 'bg-orange-500';
+          status = 'degraded';
+        } else {
+          barColor = 'bg-yellow-500';
+          status = 'degraded';
+        }
       }
       
       const isFirstDay = i === 89;
       const isLastDay = i === 0;
-      const hasProblems = uptimePercentage < 100 || dayIncidents.length > 0;
-      
-      // Se tem problemas, usar vermelho; senão usar a cor do status
-      const barColor = hasProblems ? 'bg-red-500' : statusColors[status];
       
       if (showTooltip) {
         bars.push(
@@ -509,7 +538,7 @@ export default function ServiceList({ services }) {
               <div key={service.id} className="px-6 py-4 bg-white flex items-center justify-between hover:bg-gray-50 transition-colors">
                 <div className="flex items-center gap-4 flex-1">
                   <div className="font-medium">{service.name}</div>
-                  <div className={`w-2 h-2 rounded-full ${statusColors[service.status]}`}></div>
+                  <i className={statusIcons[service.status]}></i>
                 </div>
                 <div className="text-sm text-gray-600">{statusLabels[service.status]}</div>
               </div>
@@ -702,4 +731,4 @@ export default function ServiceList({ services }) {
     </div>
   );
 }
-// Force rebuild 1774372800
+// Force rebuild 1774372900
