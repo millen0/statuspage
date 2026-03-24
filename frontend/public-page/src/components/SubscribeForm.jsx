@@ -24,7 +24,6 @@ export default function SubscribeForm() {
 
   return (
     <div className="max-w-md mx-auto">
-      <h3 className="text-sm font-medium text-gray-700 mb-3 text-center">Subscribe to Updates</h3>
       <form onSubmit={handleSubmit} className="flex gap-2">
         <input
           type="email"

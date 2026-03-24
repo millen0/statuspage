@@ -164,8 +164,7 @@ export default function App() {
       {showSubscribeModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowSubscribeModal(false)}>
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Subscribe to Updates</h3>
+            <div className="flex justify-end items-center mb-4">
               <button
                 onClick={() => setShowSubscribeModal(false)}
                 className="text-gray-400 hover:text-gray-600"
@@ -175,7 +174,7 @@ export default function App() {
                 </svg>
               </button>
             </div>
-            <p className="text-sm text-gray-600 mb-4">Receive email notifications whenever there is maintenance on the Pier Cloud platform.</p>
+            <p className="text-sm text-gray-700 mb-4 text-center">Receive email notifications whenever there is maintenance on the Pier Cloud platform.</p>
             <SubscribeForm />
           </div>
         </div>
