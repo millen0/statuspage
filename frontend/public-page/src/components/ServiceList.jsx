@@ -206,6 +206,7 @@ export default function ServiceList({ services }) {
     const fetchGroups = async () => {
       try {
         const res = await axios.get(`${API_URL}/public/service-groups`);
+        console.log('Service groups:', res.data);
         setServiceGroups(res.data || []);
       } catch (error) {
         console.error('Error fetching groups:', error);
@@ -474,7 +475,12 @@ export default function ServiceList({ services }) {
         ))}
       
       {/* Render Services (hide those with group_id) */}
-      {services && services.length > 0 && services.filter(service => !service.group_id || service.group_id === 0).length > 0 ? (
+      {services && services.length > 0 && (() => {
+        const filteredServices = services.filter(service => !service.group_id || service.group_id === 0);
+        console.log('All services:', services);
+        console.log('Filtered services (without group_id):', filteredServices);
+        return filteredServices.length > 0;
+      })() ? (
         services
           .filter(service => !service.group_id || service.group_id === 0)
           .sort((a, b) => {
