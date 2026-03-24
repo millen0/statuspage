@@ -40,8 +40,6 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
   const isPlatform = (group.display_name || group.name || '').toLowerCase().includes('platform');
 
   const toggleExpand = async () => {
-    if (isPlatform) return; // Platform não colapsa
-    
     if (!isExpanded && !membersLoaded) {
       try {
         const res = await axios.get(`${API_URL}/public/service-groups/${group.id}/members`);
@@ -86,28 +84,19 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
     }
     setIsExpanded(!isExpanded);
   };
-  
-  // Auto-expandir Platform ao carregar
-  useEffect(() => {
-    if (isPlatform && !membersLoaded) {
-      toggleExpand();
-    }
-  }, [isPlatform]);
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-      <div className={isPlatform ? '' : 'cursor-pointer'} onClick={isPlatform ? undefined : toggleExpand}>
+      <div className="cursor-pointer" onClick={toggleExpand}>
         <div className="flex items-center gap-2 mb-4">
-          {!isPlatform && (
-            <svg 
-              className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          )}
+          <svg 
+            className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
           {logoSrc ? (
             <div className="flex items-center gap-3">
               <img 
@@ -123,7 +112,7 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
           )}
         </div>
         
-        {!isExpanded && !isPlatform && (
+        {!isExpanded && (
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs text-gray-500">
               <span>90 days ago</span>
@@ -137,7 +126,7 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
         )}
       </div>
 
-      {(isExpanded || isPlatform) && (
+      {isExpanded && (
         <div className="space-y-4 pl-7 border-l-2 border-gray-200 mt-4">
           {members.map(member => {
             const memberName = member.name ? member.name.toLowerCase() : '';
@@ -456,12 +445,16 @@ export default function ServiceList({ services }) {
 
   return (
     <div className={`grid grid-cols-${gridColumns} gap-4 mb-8`}>
-      {/* Render Service Groups first in order */}
+      {/* Render Service Groups (Platform por último) */}
       {serviceGroups
         .sort((a, b) => {
-          const order = ['lighthouse', 'lia', 'space', 'cca', 'autofix', 'spot', 'spm', 'sp manager', 'skylift', 'platform'];
+          const order = ['lighthouse', 'lia', 'space', 'cca', 'autofix', 'spot', 'spm', 'sp manager', 'skylift'];
           const aName = (a.display_name || a.name || '').toLowerCase();
           const bName = (b.display_name || b.name || '').toLowerCase();
+          
+          // Platform sempre por último
+          if (aName.includes('platform')) return 1;
+          if (bName.includes('platform')) return -1;
           
           const aIndex = order.findIndex(name => aName.includes(name));
           const bIndex = order.findIndex(name => bName.includes(name));
