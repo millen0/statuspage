@@ -119,19 +119,23 @@ export default function App() {
         {/* Status Legend - Compact */}
         <div className="flex justify-center gap-6 mb-8 text-xs text-gray-600">
           <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+            <i className="fas fa-check text-green-500"></i>
             <span>Operational</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+            <i className="fas fa-minus-square text-yellow-500"></i>
+            <span>Degraded Performance</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <i className="fas fa-exclamation-triangle text-orange-500"></i>
             <span>Partial Outage</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+            <i className="fas fa-times text-red-500"></i>
             <span>Major Outage</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
+            <i className="fas fa-wrench text-blue-500"></i>
             <span>Maintenance</span>
           </div>
         </div>
@@ -179,4 +183,4 @@ export default function App() {
     </div>
   );
 }
-// Force rebuild 1774372600
+// Force rebuild 1774372700
