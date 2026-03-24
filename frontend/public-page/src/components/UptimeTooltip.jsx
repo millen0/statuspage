@@ -52,7 +52,7 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
             transform: 'translate(-50%, -100%)'
           }}
         >
-          <div className="bg-gray-900 text-white text-sm rounded-lg shadow-2xl p-4 min-w-[280px] max-w-[450px] border border-gray-700">
+          <div className="bg-gray-900 text-white text-xs rounded-lg shadow-2xl p-3 min-w-[250px] max-w-[400px] border border-gray-700">
             {/* Arrow */}
             <div
               className="absolute w-3 h-3 bg-gray-900 border-r border-b border-gray-700 transform rotate-45"
@@ -65,29 +65,29 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
 
             {/* Content */}
             <div className="relative z-10">
-              <div className="font-semibold mb-2 text-white">{formatDate(date)}</div>
+              <div className="font-semibold mb-2 text-white text-xs">{formatDate(date)}</div>
               
               {/* Red bar for problems */}
               {(uptimePercentage < 100 || hasIncidents) && (
-                <div className="w-full h-1 bg-red-500 rounded-full mb-3"></div>
+                <div className="w-full h-0.5 bg-red-500 rounded-full mb-2"></div>
               )}
               
               {uptimePercentage >= 100 && !hasIncidents ? (
-                <div className="text-gray-300">
+                <div className="text-gray-300 text-xs">
                   No downtime recorded on this day.
                 </div>
               ) : (
                 <>
                   {hasIncidents ? (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {incidents.map((incident, idx) => (
                         <div key={idx} className="">
-                          <div className="text-white font-medium mb-2">{incident.title}</div>
+                          <div className="text-white font-medium mb-1 text-xs">{incident.title}</div>
                           {incident.description && (
-                            <div className="text-gray-300 text-sm leading-relaxed">{incident.description}</div>
+                            <div className="text-gray-300 text-xs leading-snug line-clamp-3">{incident.description}</div>
                           )}
                           {incident.severity && (
-                            <div className="text-xs text-gray-400 mt-2">
+                            <div className="text-xs text-gray-400 mt-1">
                               {incident.severity === 'critical' && '🔴 Critical'}
                               {incident.severity === 'major' && '🟠 Major'}
                               {incident.severity === 'minor' && '🟡 Minor'}
@@ -99,7 +99,7 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
                     </div>
                   ) : (
                     (downtime.hours > 0 || downtime.minutes > 0) && (
-                      <div className="text-yellow-400 font-medium">
+                      <div className="text-yellow-400 font-medium text-xs">
                         Downtime: {downtime.hours > 0 && `${downtime.hours} ${downtime.hours === 1 ? 'hr' : 'hrs'}`}{downtime.hours > 0 && downtime.minutes > 0 && ' '}{downtime.minutes > 0 && `${downtime.minutes} ${downtime.minutes === 1 ? 'min' : 'mins'}`}
                       </div>
                     )
