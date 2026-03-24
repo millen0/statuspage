@@ -227,7 +227,7 @@ export default function ServiceList({ services }) {
     const day = today.getDate();
     const localToday = new Date(year, month, day); // Data local sem hora
     
-    for (let i = 89; i >= 0; i--) {
+    for (let i = 90; i >= 1; i--) {
       const date = new Date(localToday);
       date.setDate(date.getDate() - i);
       
@@ -254,8 +254,8 @@ export default function ServiceList({ services }) {
         status = 'degraded';
       }
       
-      const isFirstDay = i === 89;
-      const isLastDay = i === 0;
+      const isFirstDay = i === 90;
+      const isLastDay = i === 1;
       const hasProblems = uptimePercentage < 100 || dayIncidents.length > 0;
       
       // Se tem problemas, usar vermelho; senão usar a cor do status
