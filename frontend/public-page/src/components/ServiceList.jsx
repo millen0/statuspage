@@ -141,27 +141,23 @@ export default function ServiceList({ services }) {
         
         const results = await Promise.all(uptimePromises);
         
-        // Merge com dados existentes ao invés de substituir
+        // Process uptime data and extract incidents
         setUptimeData(prevData => {
           const newUptimeMap = { ...prevData };
           results.forEach(result => {
-            // Se já existe dados, fazer merge preservando os piores status
             if (newUptimeMap[result.serviceId]) {
               const existingData = newUptimeMap[result.serviceId];
               const mergedData = [...result.data];
               
-              // Para cada data existente, manter o pior uptime_percentage
               existingData.forEach(existingLog => {
                 const existingDate = existingLog.date.split('T')[0];
                 const newLogIndex = mergedData.findIndex(l => l.date.split('T')[0] === existingDate);
                 
                 if (newLogIndex !== -1) {
-                  // Se encontrou, manter o menor uptime (pior cenário)
                   if (existingLog.uptime_percentage < mergedData[newLogIndex].uptime_percentage) {
                     mergedData[newLogIndex] = existingLog;
                   }
                 } else {
-                  // Se não encontrou, adicionar
                   mergedData.push(existingLog);
                 }
               });
@@ -173,47 +169,25 @@ export default function ServiceList({ services }) {
           });
           return newUptimeMap;
         });
-      };
 
-      const fetchIncidentsData = async () => {
-        const incidentsPromises = services.map(async (service) => {
-          try {
-            const res = await axios.get(`${API_URL}/public/services/${service.id}/incidents-by-date`);
-            return { serviceId: service.id, data: res.data || {} };
-          } catch (error) {
-            console.error(`Error fetching incidents for service ${service.id}:`, error);
-            return { serviceId: service.id, data: {} };
-          }
-        });
-        
-        const results = await Promise.all(incidentsPromises);
-        
-        // Merge incidents data
+        // Extract incidents from uptime data
         setIncidentsData(prevData => {
           const newIncidentsMap = { ...prevData };
           results.forEach(result => {
-            if (newIncidentsMap[result.serviceId]) {
-              // Merge incidents por data
-              const merged = { ...newIncidentsMap[result.serviceId] };
-              Object.keys(result.data).forEach(date => {
-                if (merged[date]) {
-                  // Combinar incidents da mesma data
-                  merged[date] = [...merged[date], ...result.data[date]];
-                } else {
-                  merged[date] = result.data[date];
-                }
-              });
-              newIncidentsMap[result.serviceId] = merged;
-            } else {
-              newIncidentsMap[result.serviceId] = result.data;
-            }
+            const incidentsByDate = {};
+            result.data.forEach(day => {
+              const dateStr = day.date.split('T')[0];
+              if (day.incidents && day.incidents.length > 0) {
+                incidentsByDate[dateStr] = day.incidents;
+              }
+            });
+            newIncidentsMap[result.serviceId] = incidentsByDate;
           });
           return newIncidentsMap;
         });
       };
       
       fetchUptimeData();
-      fetchIncidentsData();
 
       // Auto-refresh uptime data every 5 minutes
       const refreshInterval = setInterval(() => {
