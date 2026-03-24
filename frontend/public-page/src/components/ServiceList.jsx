@@ -206,7 +206,6 @@ export default function ServiceList({ services }) {
     const fetchGroups = async () => {
       try {
         const res = await axios.get(`${API_URL}/public/service-groups`);
-        console.log('Service groups:', res.data);
         setServiceGroups(res.data || []);
       } catch (error) {
         console.error('Error fetching groups:', error);
@@ -446,61 +445,63 @@ export default function ServiceList({ services }) {
 
   return (
     <div className={`grid grid-cols-${gridColumns} gap-4 mb-8`}>
-      {/* Render Service Groups */}
-      {serviceGroups
-        .sort((a, b) => {
-          const order = ['lighthouse', 'lia', 'space', 'cca', 'autofix', 'spot', 'spm', 'sp manager', 'skylift', 'platform'];
-          const aName = (a.display_name || a.name || '').toLowerCase();
-          const bName = (b.display_name || b.name || '').toLowerCase();
-          
-          const aIndex = order.findIndex(name => aName.includes(name));
-          const bIndex = order.findIndex(name => bName.includes(name));
+      {/* Combinar grupos e serviços e ordenar juntos */}
+      {(() => {
+        // Criar array combinado de grupos e serviços
+        const allItems = [];
+        
+        // Adicionar grupos
+        serviceGroups.forEach(group => {
+          allItems.push({
+            type: 'group',
+            data: group,
+            name: (group.display_name || group.name || '').toLowerCase()
+          });
+        });
+        
+        // Adicionar serviços sem group_id
+        if (services && services.length > 0) {
+          services
+            .filter(service => !service.group_id || service.group_id === 0)
+            .forEach(service => {
+              allItems.push({
+                type: 'service',
+                data: service,
+                name: (service.name || '').toLowerCase()
+              });
+            });
+        }
+        
+        // Ordenar tudo junto
+        const order = ['lighthouse', 'lia', 'space', 'cca', 'autofix', 'spot', 'spm', 'sp manager', 'skylift', 'platform'];
+        
+        allItems.sort((a, b) => {
+          const aIndex = order.findIndex(name => a.name.includes(name));
+          const bIndex = order.findIndex(name => b.name.includes(name));
           
           if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
           if (aIndex !== -1) return -1;
           if (bIndex !== -1) return 1;
           return 0;
-        })
-        .map((group) => (
-          <ServiceGroupCard
-            key={`group-${group.id}`}
-            group={{ ...group, virtual_service_id: -group.id }}
-            uptimeData={uptimeData}
-            setUptimeData={setUptimeData}
-            incidentsData={incidentsData}
-            generateUptimeBars={generateUptimeBars}
-            calculateOverallUptime={calculateOverallUptime}
-            statusColors={statusColors}
-          />
-        ))}
-      
-      {/* Render Services (hide those with group_id) */}
-      {services && services.length > 0 && (() => {
-        const filteredServices = services.filter(service => !service.group_id || service.group_id === 0);
-        console.log('All services:', services);
-        console.log('Filtered services (without group_id):', filteredServices);
-        return filteredServices.length > 0;
-      })() ? (
-        services
-          .filter(service => !service.group_id || service.group_id === 0)
-          .sort((a, b) => {
-            // Definir ordem customizada
-            const order = ['lighthouse', 'lia', 'space', 'cca', 'autofix', 'spot', 'spm', 'sp manager', 'skylift', 'platform'];
-            const aName = a.name ? a.name.toLowerCase() : '';
-            const bName = b.name ? b.name.toLowerCase() : '';
-            
-            const aIndex = order.findIndex(name => aName.includes(name));
-            const bIndex = order.findIndex(name => bName.includes(name));
-            
-            // Se ambos estão na lista, ordenar pela posição
-            if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
-            // Se apenas um está na lista, ele vem primeiro
-            if (aIndex !== -1) return -1;
-            if (bIndex !== -1) return 1;
-            // Se nenhum está na lista, manter ordem original
-            return 0;
-          })
-          .map((service) => {
+        });
+        
+        // Renderizar itens ordenados
+        return allItems.map((item, index) => {
+          if (item.type === 'group') {
+            return (
+              <ServiceGroupCard
+                key={`group-${item.data.id}`}
+                group={{ ...item.data, virtual_service_id: -item.data.id }}
+                uptimeData={uptimeData}
+                setUptimeData={setUptimeData}
+                incidentsData={incidentsData}
+                generateUptimeBars={generateUptimeBars}
+                calculateOverallUptime={calculateOverallUptime}
+                statusColors={statusColors}
+              />
+            );
+          } else {
+            const service = item.data;
             // Determinar qual logo usar baseado no nome do serviço
             let logoSrc = null;
             let displayName = service.name;
@@ -613,8 +614,9 @@ export default function ServiceList({ services }) {
                 </div>
               </div>
             );
-          })
-      ) : null}
+          }
+        });
+      })()}
     </div>
   );
 }
