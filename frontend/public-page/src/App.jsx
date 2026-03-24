@@ -88,6 +88,27 @@ export default function App() {
         <StatusBanner status={status} />
         <MaintenanceCard maintenances={maintenances} />
         <ServiceList services={services} />
+        
+        {/* Status Legend - Compact */}
+        <div className="flex justify-center gap-6 mb-8 text-xs text-gray-600">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+            <span>Operational</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+            <span>Partial Outage</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+            <span>Major Outage</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
+            <span>Maintenance</span>
+          </div>
+        </div>
+        
         <IncidentTimeline incidents={incidents} />
         <HistorySection incidents={incidents} />
       </main>
@@ -102,29 +123,6 @@ export default function App() {
             <Link to="/maintenance-history" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
               <span style={{ fontFamily: 'arial' }}>←</span> Maintenance History
             </Link>
-          </div>
-          
-          {/* Status Legend */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-700 text-center mb-4">Status Legend</h3>
-            <div className="flex justify-center gap-8 flex-wrap">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="text-sm text-gray-600">Operational - All systems running normally</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <span className="text-sm text-gray-600">Degraded Performance - Partial service disruption</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <span className="text-sm text-gray-600">Major Outage - Service unavailable</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                <span className="text-sm text-gray-600">Under Maintenance - Scheduled maintenance in progress</span>
-              </div>
-            </div>
           </div>
           
           <div className="text-center text-sm text-gray-600 mt-6">
