@@ -60,14 +60,12 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
         
         const results = await Promise.all(uptimePromises);
         const newUptimeData = { ...uptimeData };
+        const newIncidentsData = { ...incidentsData };
+        
         results.forEach(result => {
           newUptimeData[result.serviceId] = result.data;
-        });
-        setUptimeData(newUptimeData);
-        
-        // Extrair incidents dos dados de uptime dos membros
-        const newIncidentsData = { ...incidentsData };
-        results.forEach(result => {
+          
+          // Extrair incidents dos dados de uptime dos membros
           const incidentsByDate = {};
           result.data.forEach(day => {
             const dateStr = day.date.split('T')[0];
@@ -77,12 +75,75 @@ function ServiceGroupCard({ group, uptimeData, setUptimeData, incidentsData, gen
           });
           newIncidentsData[result.serviceId] = incidentsByDate;
         });
+        
+        setUptimeData(newUptimeData);
         setIncidentsData(prev => ({ ...prev, ...newIncidentsData }));
+        
+        // Calcular uptime agregado do grupo
+        calculateGroupAggregatedUptime(membersList, results);
       } catch (error) {
         console.error('Error fetching group members:', error);
       }
     }
     setIsExpanded(!isExpanded);
+  };
+  
+  // Calcular uptime e incidents agregados do grupo
+  const calculateGroupAggregatedUptime = (membersList, uptimeResults) => {
+    if (!membersList || membersList.length === 0) return;
+    
+    // Criar mapa de datas com uptime agregado
+    const dateMap = {};
+    
+    uptimeResults.forEach(result => {
+      result.data.forEach(day => {
+        const dateStr = day.date.split('T')[0];
+        
+        if (!dateMap[dateStr]) {
+          dateMap[dateStr] = {
+            date: day.date,
+            uptimes: [],
+            incidents: []
+          };
+        }
+        
+        dateMap[dateStr].uptimes.push(day.uptime_percentage);
+        
+        if (day.incidents && day.incidents.length > 0) {
+          dateMap[dateStr].incidents.push(...day.incidents);
+        }
+      });
+    });
+    
+    // Calcular média de uptime por dia e agregar incidents
+    const aggregatedData = Object.keys(dateMap).map(dateStr => {
+      const dayData = dateMap[dateStr];
+      const avgUptime = dayData.uptimes.reduce((sum, val) => sum + val, 0) / dayData.uptimes.length;
+      
+      return {
+        date: dayData.date,
+        uptime_percentage: avgUptime,
+        incidents: dayData.incidents
+      };
+    });
+    
+    // Salvar dados agregados do grupo
+    const newUptimeData = { ...uptimeData };
+    newUptimeData[-group.id] = aggregatedData;
+    setUptimeData(newUptimeData);
+    
+    // Salvar incidents agregados
+    const groupIncidentsByDate = {};
+    aggregatedData.forEach(day => {
+      const dateStr = day.date.split('T')[0];
+      if (day.incidents && day.incidents.length > 0) {
+        groupIncidentsByDate[dateStr] = day.incidents;
+      }
+    });
+    
+    const newIncidentsData = { ...incidentsData };
+    newIncidentsData[-group.id] = groupIncidentsByDate;
+    setIncidentsData(prev => ({ ...prev, ...newIncidentsData }));
   };
 
   return (
