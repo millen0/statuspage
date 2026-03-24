@@ -487,6 +487,24 @@ func (h *AdminHandler) GetIncidents(w http.ResponseWriter, r *http.Request) {
 		if err := rows.Scan(&i.ID, &i.Title, &i.Description, &i.Severity, &i.Status, &i.ServiceID, &i.IsVisible, &i.CreatedAt, &i.UpdatedAt, &i.ResolvedAt); err != nil {
 			continue
 		}
+		
+		// Buscar updates do incident
+		updateRows, err := h.DB.Query(`
+			SELECT id, incident_id, message, status, created_at 
+			FROM incident_updates 
+			WHERE incident_id = $1 
+			ORDER BY created_at DESC
+		`, i.ID)
+		if err == nil {
+			defer updateRows.Close()
+			for updateRows.Next() {
+				var u models.IncidentUpdate
+				if err := updateRows.Scan(&u.ID, &u.IncidentID, &u.Message, &u.Status, &u.CreatedAt); err == nil {
+					i.Updates = append(i.Updates, u)
+				}
+			}
+		}
+		
 		incidents = append(incidents, i)
 	}
 
