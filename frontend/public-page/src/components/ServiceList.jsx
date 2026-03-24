@@ -310,10 +310,12 @@ export default function ServiceList({ services }) {
 
   const calculateOverallUptime = (serviceId) => {
     const uptimeLogs = uptimeData[serviceId] || [];
+    console.log(`Service ${serviceId} uptime logs:`, uptimeLogs.length, uptimeLogs);
     if (uptimeLogs.length === 0) return '100.0';
     
     // Calcular média apenas dos dias com logs registrados
     const avgUptime = uptimeLogs.reduce((sum, log) => sum + parseFloat(log.uptime_percentage), 0) / uptimeLogs.length;
+    console.log(`Service ${serviceId} calculated uptime:`, avgUptime.toFixed(1));
     return avgUptime.toFixed(1);
   };
 
