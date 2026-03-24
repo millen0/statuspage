@@ -304,8 +304,13 @@ export default function ServiceList({ services }) {
         uptime: d.uptime_percentage
       })));
     }
-    console.log(`Service ${serviceId} - Total days: ${uptimeLogs.length}, Days with issues: ${daysWithIssues.length}, Calculated uptime: ${avgUptime.toFixed(2)}%`);
+    console.log(`Service ${serviceId} - Total days: ${uptimeLogs.length}, Days with issues: ${daysWithIssues.length}, Calculated uptime: ${avgUptime}%`);
     
+    // Se o uptime for >= 99.99%, mostrar 3 casas decimais para evidenciar pequenas diferenças
+    // Caso contrário, mostrar 2 casas decimais
+    if (avgUptime >= 99.99 && avgUptime < 100) {
+      return avgUptime.toFixed(3);
+    }
     return avgUptime.toFixed(2);
   };
 
