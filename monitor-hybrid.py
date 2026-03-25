@@ -177,7 +177,7 @@ def create_or_update_incident(conn, service_id, name, new_status, error_message=
             
             cur.execute("""
                 INSERT INTO incidents (title, description, severity, status, service_id, is_visible, created_at, updated_at)
-                VALUES (%s, %s, %s, 'investigating', %s, true, NOW(), NOW())
+                VALUES (%s, %s, %s, 'investigating', %s, false, NOW(), NOW())
             """, (title, description, severity, service_id))
             conn.commit()
             print(f"   → Created incident for {name}")
