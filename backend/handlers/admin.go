@@ -585,7 +585,7 @@ func (h *AdminHandler) UpdateIncident(w http.ResponseWriter, r *http.Request) {
 		var updateMessage string
 		switch i.Status {
 		case "resolved":
-			updateMessage = "The issue was resolved promptly by our team after applying the necessary corrections."
+			updateMessage = "Service has been restored and is now operational."
 		case "monitoring":
 			updateMessage = "The issue has been fixed and we are monitoring the results."
 		case "identified":
