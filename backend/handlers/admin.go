@@ -471,7 +471,7 @@ func (h *AdminHandler) UnpublishServiceIncident(w http.ResponseWriter, r *http.R
 // Incidents
 func (h *AdminHandler) GetIncidents(w http.ResponseWriter, r *http.Request) {
 	rows, err := h.DB.Query(`
-		SELECT id, title, description, severity, status, service_id, is_visible, created_at, updated_at, resolved_at 
+		SELECT id, title, description, severity, status, service_id, maintenance_id, is_visible, created_at, updated_at, resolved_at 
 		FROM incidents 
 		ORDER BY created_at DESC
 	`)
@@ -484,7 +484,7 @@ func (h *AdminHandler) GetIncidents(w http.ResponseWriter, r *http.Request) {
 	var incidents []models.Incident
 	for rows.Next() {
 		var i models.Incident
-		if err := rows.Scan(&i.ID, &i.Title, &i.Description, &i.Severity, &i.Status, &i.ServiceID, &i.IsVisible, &i.CreatedAt, &i.UpdatedAt, &i.ResolvedAt); err != nil {
+		if err := rows.Scan(&i.ID, &i.Title, &i.Description, &i.Severity, &i.Status, &i.ServiceID, &i.MaintenanceID, &i.IsVisible, &i.CreatedAt, &i.UpdatedAt, &i.ResolvedAt); err != nil {
 			continue
 		}
 		

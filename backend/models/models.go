@@ -27,17 +27,18 @@ type Service struct {
 }
 
 type Incident struct {
-	ID          int              `json:"id"`
-	Title       string           `json:"title"`
-	Description string           `json:"description"`
-	Severity    string           `json:"severity"`
-	Status      string           `json:"status"`
-	ServiceID   *int             `json:"service_id"`
-	IsVisible   bool             `json:"is_visible"`
-	CreatedAt   time.Time        `json:"created_at"`
-	UpdatedAt   time.Time        `json:"updated_at"`
-	ResolvedAt  *time.Time       `json:"resolved_at"`
-	Updates     []IncidentUpdate `json:"updates,omitempty"`
+	ID            int              `json:"id"`
+	Title         string           `json:"title"`
+	Description   string           `json:"description"`
+	Severity      string           `json:"severity"`
+	Status        string           `json:"status"`
+	ServiceID     *int             `json:"service_id"`
+	MaintenanceID *int             `json:"maintenance_id,omitempty"`
+	IsVisible     bool             `json:"is_visible"`
+	CreatedAt     time.Time        `json:"created_at"`
+	UpdatedAt     time.Time        `json:"updated_at"`
+	ResolvedAt    *time.Time       `json:"resolved_at"`
+	Updates       []IncidentUpdate `json:"updates,omitempty"`
 }
 
 type IncidentUpdate struct {

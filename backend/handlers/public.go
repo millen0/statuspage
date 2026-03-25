@@ -93,7 +93,7 @@ func (h *PublicHandler) GetServices(w http.ResponseWriter, r *http.Request) {
 
 func (h *PublicHandler) GetIncidents(w http.ResponseWriter, r *http.Request) {
 	rows, err := h.DB.Query(`
-		SELECT id, title, description, severity, status, service_id, is_visible, created_at, updated_at, resolved_at 
+		SELECT id, title, description, severity, status, service_id, maintenance_id, is_visible, created_at, updated_at, resolved_at 
 		FROM incidents 
 		WHERE is_visible = true
 		ORDER BY created_at DESC
@@ -107,7 +107,7 @@ func (h *PublicHandler) GetIncidents(w http.ResponseWriter, r *http.Request) {
 	var incidents []models.Incident
 	for rows.Next() {
 		var i models.Incident
-		if err := rows.Scan(&i.ID, &i.Title, &i.Description, &i.Severity, &i.Status, &i.ServiceID, &i.IsVisible, &i.CreatedAt, &i.UpdatedAt, &i.ResolvedAt); err != nil {
+		if err := rows.Scan(&i.ID, &i.Title, &i.Description, &i.Severity, &i.Status, &i.ServiceID, &i.MaintenanceID, &i.IsVisible, &i.CreatedAt, &i.UpdatedAt, &i.ResolvedAt); err != nil {
 			continue
 		}
 
@@ -289,10 +289,11 @@ func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request)
 	defer rows.Close()
 
 	type IncidentInfo struct {
-		Title       string  `json:"title"`
-		Description string  `json:"description"`
-		Severity    string  `json:"severity"`
-		Duration    float64 `json:"duration_minutes"`
+		Title         string  `json:"title"`
+		Description   string  `json:"description"`
+		Severity      string  `json:"severity"`
+		Duration      float64 `json:"duration_minutes"`
+		MaintenanceID *int    `json:"maintenance_id,omitempty"`
 	}
 
 	type UptimeDay struct {
@@ -319,7 +320,8 @@ func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request)
 		
 		incidentRows, incErr := h.DB.Query(`
 			SELECT i.title, i.description, i.severity,
-				EXTRACT(EPOCH FROM (COALESCE(i.resolved_at, NOW()) - i.created_at))/60 as duration_minutes
+				EXTRACT(EPOCH FROM (COALESCE(i.resolved_at, NOW()) - i.created_at))/60 as duration_minutes,
+				i.maintenance_id
 			FROM incidents i
 			WHERE i.service_id = $1
 			AND i.uptime_date = $2
@@ -335,7 +337,7 @@ func (h *PublicHandler) GetServiceUptime(w http.ResponseWriter, r *http.Request)
 			incidentCount := 0
 			for incidentRows.Next() {
 				var incident IncidentInfo
-				if err := incidentRows.Scan(&incident.Title, &incident.Description, &incident.Severity, &incident.Duration); err == nil {
+				if err := incidentRows.Scan(&incident.Title, &incident.Description, &incident.Severity, &incident.Duration, &incident.MaintenanceID); err == nil {
 					day.Incidents = append(day.Incidents, incident)
 					incidentCount++
 				} else {

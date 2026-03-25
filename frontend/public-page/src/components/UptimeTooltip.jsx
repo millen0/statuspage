@@ -117,6 +117,12 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
                                 )}
                               </div>
                             )}
+                            {incident.maintenance_id && (
+                              <div className="flex items-center gap-1.5 text-xs text-blue-400 mt-1">
+                                <i className="fas fa-wrench"></i>
+                                <span>Occurred during scheduled maintenance</span>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
