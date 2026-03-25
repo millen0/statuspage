@@ -1,3 +1,19 @@
+#!/bin/bash
+
+echo "=========================================="
+echo "Atualizando Template de Email"
+echo "=========================================="
+echo ""
+
+# Fazer backup do arquivo atual
+echo "1. Fazendo backup do arquivo atual..."
+sudo cp /opt/statuspage/send-scheduled-maintenance-emails.py /opt/statuspage/send-scheduled-maintenance-emails.py.backup
+echo "✅ Backup criado"
+
+# Atualizar o arquivo
+echo ""
+echo "2. Atualizando arquivo..."
+sudo tee /opt/statuspage/send-scheduled-maintenance-emails.py > /dev/null << 'EOFPYTHON'
 #!/usr/bin/python3
 import psycopg2
 import requests
@@ -159,3 +175,21 @@ if __name__ == "__main__":
         print(f"❌ Error: {e}")
     
     print(f"\n{'='*60}\n")
+EOFPYTHON
+
+echo "✅ Arquivo atualizado"
+
+# Dar permissão de execução
+echo ""
+echo "3. Ajustando permissões..."
+sudo chmod +x /opt/statuspage/send-scheduled-maintenance-emails.py
+sudo chown ubuntu:ubuntu /opt/statuspage/send-scheduled-maintenance-emails.py
+echo "✅ Permissões ajustadas"
+
+echo ""
+echo "=========================================="
+echo "✅ Atualização concluída!"
+echo "=========================================="
+echo ""
+echo "Para testar, execute:"
+echo "cd /opt/statuspage && python3 send-scheduled-maintenance-emails.py"
