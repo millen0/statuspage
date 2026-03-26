@@ -105,23 +105,6 @@ export default function RichTextEditor({ value, onChange }) {
             </div>
           )}
         </div>
-        <div className="w-px bg-gray-300 mx-1"></div>
-        <button
-          type="button"
-          onClick={() => execCommand('insertUnorderedList')}
-          className={theme === 'dark' ? 'px-3 py-1 rounded hover:bg-[#30363d] text-white' : 'px-3 py-1 rounded hover:bg-gray-200'}
-          title="Bullet List"
-        >
-          • List
-        </button>
-        <button
-          type="button"
-          onClick={() => execCommand('insertOrderedList')}
-          className={theme === 'dark' ? 'px-3 py-1 rounded hover:bg-[#30363d] text-white' : 'px-3 py-1 rounded hover:bg-gray-200'}
-          title="Numbered List"
-        >
-          1. List
-        </button>
       </div>
 
       <div
