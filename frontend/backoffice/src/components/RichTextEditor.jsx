@@ -6,6 +6,7 @@ export default function RichTextEditor({ value, onChange }) {
   const editorRef = useRef(null);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
+  const [linkText, setLinkText] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(false);
 
   const execCommand = (command, value = null) => {
@@ -14,10 +15,13 @@ export default function RichTextEditor({ value, onChange }) {
   };
 
   const insertLink = () => {
-    if (linkUrl) {
-      execCommand('createLink', linkUrl);
+    if (linkUrl && linkText) {
+      const linkHtml = `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
+      document.execCommand('insertHTML', false, linkHtml);
       setLinkUrl('');
+      setLinkText('');
       setShowLinkModal(false);
+      editorRef.current?.focus();
     }
   };
 
@@ -120,14 +124,29 @@ export default function RichTextEditor({ value, onChange }) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className={theme === 'dark' ? 'bg-[#161b22] border border-[#30363d] rounded-lg p-6 w-96' : 'bg-white rounded-lg p-6 w-96 shadow-xl'}>
             <h3 className={theme === 'dark' ? 'text-lg font-medium text-white mb-4' : 'text-lg font-medium mb-4'}>Insert Link</h3>
-            <input
-              type="url"
-              placeholder="https://example.com"
-              value={linkUrl}
-              onChange={(e) => setLinkUrl(e.target.value)}
-              className={theme === 'dark' ? 'w-full px-3 py-2 bg-[#0d1117] border border-[#30363d] rounded text-white' : 'w-full px-3 py-2 border border-gray-300 rounded'}
-              autoFocus
-            />
+            <div className="space-y-3">
+              <div>
+                <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300 mb-1' : 'block text-sm font-medium text-gray-700 mb-1'}>Link Text</label>
+                <input
+                  type="text"
+                  placeholder="Click here"
+                  value={linkText}
+                  onChange={(e) => setLinkText(e.target.value)}
+                  className={theme === 'dark' ? 'w-full px-3 py-2 bg-[#0d1117] border border-[#30363d] rounded text-white' : 'w-full px-3 py-2 border border-gray-300 rounded'}
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300 mb-1' : 'block text-sm font-medium text-gray-700 mb-1'}>URL</label>
+                <input
+                  type="url"
+                  placeholder="https://example.com"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  className={theme === 'dark' ? 'w-full px-3 py-2 bg-[#0d1117] border border-[#30363d] rounded text-white' : 'w-full px-3 py-2 border border-gray-300 rounded'}
+                />
+              </div>
+            </div>
             <div className="flex gap-2 mt-4">
               <button
                 type="button"
@@ -141,6 +160,7 @@ export default function RichTextEditor({ value, onChange }) {
                 onClick={() => {
                   setShowLinkModal(false);
                   setLinkUrl('');
+                  setLinkText('');
                 }}
                 className={theme === 'dark' ? 'flex-1 px-4 py-2 bg-[#30363d] text-white rounded hover:bg-[#484f58]' : 'flex-1 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300'}
               >
