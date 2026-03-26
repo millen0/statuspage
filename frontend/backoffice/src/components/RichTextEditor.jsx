@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useThemeStore } from '../contexts/themeStore';
 
 export default function RichTextEditor({ value, onChange }) {
@@ -8,6 +8,13 @@ export default function RichTextEditor({ value, onChange }) {
   const [linkUrl, setLinkUrl] = useState('');
   const [linkText, setLinkText] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(false);
+
+  // Inicializar o conteúdo apenas na montagem
+  useEffect(() => {
+    if (editorRef.current && value && editorRef.current.innerHTML === '') {
+      editorRef.current.innerHTML = value;
+    }
+  }, []);
 
   const execCommand = (command, value = null) => {
     document.execCommand(command, false, value);
@@ -22,11 +29,9 @@ export default function RichTextEditor({ value, onChange }) {
     if (linkUrl && linkText) {
       const linkHtml = `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer">${linkText}</a>&nbsp;`;
       
-      // Focus no editor primeiro
       if (editorRef.current) {
         editorRef.current.focus();
         
-        // Inserir o HTML
         const selection = window.getSelection();
         if (selection.rangeCount > 0) {
           const range = selection.getRangeAt(0);
@@ -34,13 +39,11 @@ export default function RichTextEditor({ value, onChange }) {
           const fragment = range.createContextualFragment(linkHtml);
           range.insertNode(fragment);
           
-          // Move cursor para depois do link
           range.collapse(false);
           selection.removeAllRanges();
           selection.addRange(range);
         }
         
-        // Atualizar o valor
         onChange(editorRef.current.innerHTML);
       }
       
@@ -50,29 +53,9 @@ export default function RichTextEditor({ value, onChange }) {
     }
   };
 
-  const handleInput = (e) => {
+  const handleInput = () => {
     if (editorRef.current) {
-      // Salvar a posição do cursor
-      const selection = window.getSelection();
-      const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-      const cursorPosition = range ? range.startOffset : 0;
-      const currentNode = range ? range.startContainer : null;
-      
       onChange(editorRef.current.innerHTML);
-      
-      // Restaurar a posição do cursor
-      if (currentNode && editorRef.current.contains(currentNode)) {
-        try {
-          const newRange = document.createRange();
-          newRange.setStart(currentNode, Math.min(cursorPosition, currentNode.length || 0));
-          newRange.collapse(true);
-          selection.removeAllRanges();
-          selection.addRange(newRange);
-        } catch (e) {
-          // Se falhar, apenas foca no editor
-          editorRef.current.focus();
-        }
-      }
     }
   };
 
@@ -184,8 +167,8 @@ export default function RichTextEditor({ value, onChange }) {
         onPaste={handlePaste}
         suppressContentEditableWarning
         className={theme === 'dark' ? 'p-3 min-h-[120px] bg-[#0d1117] text-white focus:outline-none rich-text-content' : 'p-3 min-h-[120px] bg-white focus:outline-none rich-text-content'}
-        style={{ wordWrap: 'break-word', whiteSpace: 'normal', cursor: 'text', caretColor: 'auto' }}
-      >{value ? <span dangerouslySetInnerHTML={{ __html: value }} /> : ''}</div>
+        style={{ wordWrap: 'break-word', whiteSpace: 'normal', cursor: 'text' }}
+      />
 
       {showLinkModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
