@@ -11,7 +11,12 @@ export default function RichTextEditor({ value, onChange }) {
 
   const execCommand = (command, value = null) => {
     document.execCommand(command, false, value);
-    editorRef.current?.focus();
+    setTimeout(() => {
+      if (editorRef.current) {
+        onChange(editorRef.current.innerHTML);
+        editorRef.current.focus();
+      }
+    }, 0);
   };
 
   const insertLink = () => {
@@ -21,7 +26,13 @@ export default function RichTextEditor({ value, onChange }) {
       setLinkUrl('');
       setLinkText('');
       setShowLinkModal(false);
-      editorRef.current?.focus();
+      // Trigger onChange manually
+      setTimeout(() => {
+        if (editorRef.current) {
+          onChange(editorRef.current.innerHTML);
+          editorRef.current.focus();
+        }
+      }, 0);
     }
   };
 
