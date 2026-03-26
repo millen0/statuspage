@@ -52,7 +52,27 @@ export default function RichTextEditor({ value, onChange }) {
 
   const handleInput = (e) => {
     if (editorRef.current) {
+      // Salvar a posição do cursor
+      const selection = window.getSelection();
+      const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+      const cursorPosition = range ? range.startOffset : 0;
+      const currentNode = range ? range.startContainer : null;
+      
       onChange(editorRef.current.innerHTML);
+      
+      // Restaurar a posição do cursor
+      if (currentNode && editorRef.current.contains(currentNode)) {
+        try {
+          const newRange = document.createRange();
+          newRange.setStart(currentNode, Math.min(cursorPosition, currentNode.length || 0));
+          newRange.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(newRange);
+        } catch (e) {
+          // Se falhar, apenas foca no editor
+          editorRef.current.focus();
+        }
+      }
     }
   };
 
@@ -158,15 +178,14 @@ export default function RichTextEditor({ value, onChange }) {
 
       <div
         ref={editorRef}
-        contentEditable
+        contentEditable="true"
         onInput={handleInput}
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
         suppressContentEditableWarning
         className={theme === 'dark' ? 'p-3 min-h-[120px] bg-[#0d1117] text-white focus:outline-none rich-text-content' : 'p-3 min-h-[120px] bg-white focus:outline-none rich-text-content'}
-        style={{ wordWrap: 'break-word', whiteSpace: 'normal', cursor: 'text' }}
-        dangerouslySetInnerHTML={{ __html: value }}
-      />
+        style={{ wordWrap: 'break-word', whiteSpace: 'normal', cursor: 'text', caretColor: 'auto' }}
+      >{value ? <span dangerouslySetInnerHTML={{ __html: value }} /> : ''}</div>
 
       {showLinkModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
