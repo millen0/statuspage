@@ -25,7 +25,16 @@ export default function RichTextEditor({ value, onChange }) {
     onChange(editorRef.current.innerHTML);
   };
 
-  const colors = ['#000000', '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#34495e'];
+  const colors = [
+    { hex: '#000000', name: 'Black' },
+    { hex: '#e74c3c', name: 'Red' },
+    { hex: '#3498db', name: 'Blue' },
+    { hex: '#2ecc71', name: 'Green' },
+    { hex: '#f39c12', name: 'Orange' },
+    { hex: '#9b59b6', name: 'Purple' },
+    { hex: '#1abc9c', name: 'Teal' },
+    { hex: '#95a5a6', name: 'Gray' },
+  ];
 
   return (
     <div className={theme === 'dark' ? 'border border-[#30363d] rounded-md' : 'border border-gray-300 rounded-md'}>
@@ -73,19 +82,24 @@ export default function RichTextEditor({ value, onChange }) {
             🎨
           </button>
           {showColorPicker && (
-            <div className={theme === 'dark' ? 'absolute top-full mt-1 p-2 bg-[#161b22] border border-[#30363d] rounded shadow-lg z-10' : 'absolute top-full mt-1 p-2 bg-white border border-gray-300 rounded shadow-lg z-10'}>
-              <div className="grid grid-cols-4 gap-1">
+            <div className={theme === 'dark' ? 'absolute top-full mt-1 p-3 bg-[#161b22] border border-[#30363d] rounded shadow-lg z-10 w-48' : 'absolute top-full mt-1 p-3 bg-white border border-gray-300 rounded shadow-lg z-10 w-48'}>
+              <div className="space-y-2">
                 {colors.map((color) => (
                   <button
-                    key={color}
+                    key={color.hex}
                     type="button"
                     onClick={() => {
-                      execCommand('foreColor', color);
+                      execCommand('foreColor', color.hex);
                       setShowColorPicker(false);
                     }}
-                    className="w-6 h-6 rounded border border-gray-300"
-                    style={{ backgroundColor: color }}
-                  />
+                    className={theme === 'dark' ? 'w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[#30363d] text-left' : 'w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 text-left'}
+                  >
+                    <span
+                      className="w-5 h-5 rounded border border-gray-300 flex-shrink-0"
+                      style={{ backgroundColor: color.hex }}
+                    />
+                    <span className={theme === 'dark' ? 'text-sm text-white' : 'text-sm text-gray-700'}>{color.name}</span>
+                  </button>
                 ))}
               </div>
             </div>
