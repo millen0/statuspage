@@ -2,6 +2,7 @@
 .rich-text-content a {
   color: #3b82f6;
   text-decoration: underline;
+  cursor: pointer;
 }
 
 .rich-text-content a:hover {
@@ -32,4 +33,16 @@
 
 .rich-text-content u {
   text-decoration: underline;
+}
+
+/* Estilo específico para links dentro do editor contentEditable */
+[contenteditable] a {
+  color: #3b82f6 !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+[contenteditable] a:hover {
+  color: #2563eb !important;
 }

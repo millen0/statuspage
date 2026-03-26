@@ -163,8 +163,8 @@ export default function RichTextEditor({ value, onChange }) {
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
         suppressContentEditableWarning
-        className={theme === 'dark' ? 'p-3 min-h-[120px] bg-[#0d1117] text-white focus:outline-none' : 'p-3 min-h-[120px] bg-white focus:outline-none'}
-        style={{ wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}
+        className={theme === 'dark' ? 'p-3 min-h-[120px] bg-[#0d1117] text-white focus:outline-none rich-text-content' : 'p-3 min-h-[120px] bg-white focus:outline-none rich-text-content'}
+        style={{ wordWrap: 'break-word', whiteSpace: 'normal', cursor: 'text' }}
         dangerouslySetInnerHTML={{ __html: value }}
       />
 
