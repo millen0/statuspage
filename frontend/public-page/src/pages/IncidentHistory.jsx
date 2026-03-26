@@ -132,16 +132,23 @@ export default function IncidentHistory() {
                         {/* Título do Incident */}
                         <div className="mb-4">
                           <h4 className="text-lg font-semibold text-gray-900 mb-2">{incident.title}</h4>
-                          <span className={`inline-block px-2 py-1 text-xs font-medium rounded border ${getSeverityColor(incident.severity)}`}>
-                            {incident.severity || 'minor'}
-                          </span>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`inline-block px-2 py-1 text-xs font-medium rounded border ${getSeverityColor(incident.severity)}`}>
+                              {incident.severity || 'minor'}
+                            </span>
+                          </div>
+                          {incident.description && (
+                            <p className="text-sm text-gray-700 mt-2">{incident.description}</p>
+                          )}
                         </div>
 
                         {/* Timeline de Updates */}
                         <div className="space-y-3">
-                          {/* Updates (ordem reversa - mais recente primeiro) */}
+                          {/* Updates (ordem reversa - mais recente primeiro) - excluindo status resolved */}
                           {incident.updates && incident.updates.length > 0 && (
-                            incident.updates.map((update, idx) => (
+                            incident.updates
+                              .filter(update => update.status !== 'resolved')
+                              .map((update, idx) => (
                               <div key={update.id} className="border-l-2 border-gray-300 pl-4">
                                 <div className="flex items-start justify-between">
                                   <div className="flex-1">
