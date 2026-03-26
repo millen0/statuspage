@@ -144,6 +144,24 @@ export default function IncidentHistory() {
 
                         {/* Timeline de Updates */}
                         <div className="space-y-3">
+                          {/* Status Resolved */}
+                          <div className="border-l-2 border-green-500 pl-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <span className={`font-semibold ${getStatusColor('resolved')}`}>
+                                  {getStatusLabel('resolved')}
+                                </span>
+                                <span className="text-gray-500 text-sm ml-2">-</span>
+                                <span className="text-gray-700 text-sm ml-2">
+                                  Service has been restored and is now operational.
+                                </span>
+                              </div>
+                              <span className="text-xs text-gray-500 ml-4 whitespace-nowrap">
+                                {formatDate(incident.resolved_at || incident.updated_at)}
+                              </span>
+                            </div>
+                          </div>
+
                           {/* Updates (ordem reversa - mais recente primeiro) - excluindo status resolved */}
                           {incident.updates && incident.updates.length > 0 && (
                             incident.updates
