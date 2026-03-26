@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { getMaintenances, createMaintenance, updateMaintenance } from '../services/api';
 import { useThemeStore } from '../contexts/themeStore';
+import RichTextEditor from '../components/RichTextEditor';
+import '../styles/richtext.css';
 
 export default function Maintenances() {
   const theme = useThemeStore((state) => state.theme);
@@ -127,13 +129,10 @@ export default function Maintenances() {
                 />
               </div>
               <div>
-                <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300' : 'block text-sm font-medium text-gray-700'}>Description</label>
-                <textarea
-                  required
+                <label className={theme === 'dark' ? 'block text-sm font-medium text-gray-300 mb-2' : 'block text-sm font-medium text-gray-700 mb-2'}>Description</label>
+                <RichTextEditor
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className={theme === 'dark' ? 'mt-1 block w-full bg-[#0d1117] border border-[#30363d] rounded-md shadow-sm py-2 px-3 text-white' : 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3'}
-                  rows="3"
+                  onChange={(value) => setFormData({ ...formData, description: value })}
                 />
               </div>
               <div>
@@ -229,7 +228,10 @@ export default function Maintenances() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className={theme === 'dark' ? 'text-lg font-medium text-white' : 'text-lg font-medium'}>{maintenance.title}</h3>
-                    <p className={theme === 'dark' ? 'text-sm text-gray-400' : 'text-sm text-gray-500'}>{maintenance.description}</p>
+                    <div 
+                      className={theme === 'dark' ? 'text-sm text-gray-400 rich-text-content' : 'text-sm text-gray-500 rich-text-content'}
+                      dangerouslySetInnerHTML={{ __html: maintenance.description }}
+                    />
                     <div className={theme === 'dark' ? 'text-sm text-gray-400 mt-2' : 'text-sm text-gray-600 mt-2'}>
                       <div>Start: {new Date(maintenance.scheduled_start).toISOString().replace('T', ' ').slice(0, 19)}</div>
                       <div>End: {new Date(maintenance.scheduled_end).toISOString().replace('T', ' ').slice(0, 19)}</div>

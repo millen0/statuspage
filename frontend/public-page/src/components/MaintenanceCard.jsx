@@ -1,3 +1,5 @@
+import '../styles/richtext.css';
+
 export default function MaintenanceCard({ maintenances }) {
   const activeMaintenances = maintenances.filter(m => m.status !== 'completed');
   
@@ -19,7 +21,10 @@ export default function MaintenanceCard({ maintenances }) {
                 {maintenance.status}
               </span>
             </div>
-            <p className="text-sm text-gray-700 mb-3">{maintenance.description}</p>
+            <div 
+              className="text-sm text-gray-700 mb-3 rich-text-content"
+              dangerouslySetInnerHTML={{ __html: maintenance.description }}
+            />
             <div className="text-sm text-gray-600">
               <div>Start: {formatDate(maintenance.scheduled_start)}</div>
               <div>End: {formatDate(maintenance.scheduled_end)}</div>

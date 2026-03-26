@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getMaintenances } from '../services/api';
+import '../styles/richtext.css';
 
 export default function MaintenanceHistory() {
   const [maintenances, setMaintenances] = useState([]);
@@ -198,9 +199,10 @@ export default function MaintenanceHistory() {
                                   {getStatusLabel('scheduled')}
                                 </span>
                                 <span className="text-gray-500 text-sm ml-2">-</span>
-                                <span className="text-gray-700 text-sm ml-2">
-                                  {maintenance.description}
-                                </span>
+                                <div 
+                                  className="text-gray-700 text-sm ml-2 inline rich-text-content"
+                                  dangerouslySetInnerHTML={{ __html: maintenance.description }}
+                                />
                               </div>
                               <span className="text-xs text-gray-500 ml-4 whitespace-nowrap">
                                 {formatDate(maintenance.created_at)}
