@@ -14,30 +14,64 @@ export default function RichTextEditor({ value, onChange }) {
     setTimeout(() => {
       if (editorRef.current) {
         onChange(editorRef.current.innerHTML);
-        editorRef.current.focus();
       }
-    }, 0);
+    }, 10);
   };
 
   const insertLink = () => {
     if (linkUrl && linkText) {
-      const linkHtml = `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
-      document.execCommand('insertHTML', false, linkHtml);
+      const linkHtml = `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer">${linkText}</a>&nbsp;`;
+      
+      // Focus no editor primeiro
+      if (editorRef.current) {
+        editorRef.current.focus();
+        
+        // Inserir o HTML
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          range.deleteContents();
+          const fragment = range.createContextualFragment(linkHtml);
+          range.insertNode(fragment);
+          
+          // Move cursor para depois do link
+          range.collapse(false);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+        
+        // Atualizar o valor
+        onChange(editorRef.current.innerHTML);
+      }
+      
       setLinkUrl('');
       setLinkText('');
       setShowLinkModal(false);
-      // Trigger onChange manually
-      setTimeout(() => {
-        if (editorRef.current) {
-          onChange(editorRef.current.innerHTML);
-          editorRef.current.focus();
-        }
-      }, 0);
     }
   };
 
-  const handleInput = () => {
-    onChange(editorRef.current.innerHTML);
+  const handleInput = (e) => {
+    if (editorRef.current) {
+      onChange(editorRef.current.innerHTML);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    // Permitir navegação normal do cursor
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) {
+      return;
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData('text/plain');
+    document.execCommand('insertText', false, text);
+    setTimeout(() => {
+      if (editorRef.current) {
+        onChange(editorRef.current.innerHTML);
+      }
+    }, 10);
   };
 
   const colors = [
@@ -126,9 +160,12 @@ export default function RichTextEditor({ value, onChange }) {
         ref={editorRef}
         contentEditable
         onInput={handleInput}
-        dangerouslySetInnerHTML={{ __html: value }}
+        onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
+        suppressContentEditableWarning
         className={theme === 'dark' ? 'p-3 min-h-[120px] bg-[#0d1117] text-white focus:outline-none' : 'p-3 min-h-[120px] bg-white focus:outline-none'}
-        style={{ wordWrap: 'break-word' }}
+        style={{ wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}
+        dangerouslySetInnerHTML={{ __html: value }}
       />
 
       {showLinkModal && (
