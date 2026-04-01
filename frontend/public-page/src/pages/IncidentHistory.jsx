@@ -153,7 +153,7 @@ export default function IncidentHistory() {
                                 </span>
                                 <span className="text-gray-500 text-sm ml-2">-</span>
                                 <span className="text-gray-700 text-sm ml-2">
-                                  Service has been restored and is now operational.
+                                  Service has been restored and is now operational. {incident.description}
                                 </span>
                               </div>
                               <span className="text-xs text-gray-500 ml-4 whitespace-nowrap">
@@ -195,7 +195,7 @@ export default function IncidentHistory() {
                                 </span>
                                 <span className="text-gray-500 text-sm ml-2">-</span>
                                 <span className="text-gray-700 text-sm ml-2">
-                                  {incident.description}
+                                  We are investigating reports of service disruption.
                                 </span>
                               </div>
                               <span className="text-xs text-gray-500 ml-4 whitespace-nowrap">
