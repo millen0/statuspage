@@ -133,6 +133,7 @@ export default function MaintenanceHistory() {
                           {maintenance.updates && maintenance.updates.length > 0 && (
                             maintenance.updates.slice().reverse().map((update, index) => {
                               const isFirst = index === 0;
+                              const isScheduled = update.status === 'scheduled';
                               const borderColor = isFirst && update.status === 'completed' ? 'border-green-500' : 
                                                  isFirst && update.status === 'in_progress' ? 'border-yellow-500' :
                                                  isFirst && update.status === 'scheduled' ? 'border-blue-500' :
@@ -154,7 +155,7 @@ export default function MaintenanceHistory() {
                                       {formatDate(update.created_at)}
                                     </span>
                                   </div>
-                                  {index === maintenance.updates.length - 1 && (
+                                  {isScheduled && (
                                     <div className="mt-2 text-xs text-gray-600">
                                       <div><span className="font-medium">Scheduled Start:</span> {formatDate(maintenance.scheduled_start)}</div>
                                       <div><span className="font-medium">Scheduled End:</span> {formatDate(maintenance.scheduled_end)}</div>
