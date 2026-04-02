@@ -117,7 +117,7 @@ export default function App() {
         <ServiceList services={services} />
         
         {/* Status Legend - Compact */}
-        <div className="flex justify-center gap-6 mb-8 text-xs text-gray-600">
+        <div className="flex justify-center gap-6 mb-4 text-xs text-gray-600">
           <div className="flex items-center gap-1.5">
             <i className="fas fa-check text-green-500"></i>
             <span>Operational</span>
@@ -144,7 +144,7 @@ export default function App() {
         <HistorySection incidents={incidents} />
       </main>
 
-      <footer className="border-t border-gray-200 mt-16">
+      <footer className="border-t border-gray-200 mt-8">
         <div className="max-w-5xl mx-auto px-4 py-8">
           <div className="text-center flex justify-center gap-6">
             <Link to="/history" className="text-sm text-red-600 hover:text-red-800 font-medium">
