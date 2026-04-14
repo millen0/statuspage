@@ -94,19 +94,19 @@ export default function UptimeTooltip({ date, uptimePercentage, incidents, child
                                 {incident.severity === 'critical' && (
                                   <>
                                     <i className="fas fa-times text-red-500"></i>
-                                    <span>Critical</span>
+                                    <span>Major Outage</span>
                                   </>
                                 )}
                                 {incident.severity === 'major' && (
                                   <>
-                                    <i className="fas fa-times text-red-500"></i>
-                                    <span>Major</span>
+                                    <i className="fas fa-exclamation-triangle text-orange-500"></i>
+                                    <span>Partial Outage</span>
                                   </>
                                 )}
                                 {incident.severity === 'minor' && (
                                   <>
                                     <i className="fas fa-minus-square text-yellow-500"></i>
-                                    <span>Minor</span>
+                                    <span>Degraded Performance</span>
                                   </>
                                 )}
                                 {incident.severity === 'info' && (
