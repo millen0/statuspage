@@ -158,9 +158,9 @@ export default function Incidents() {
                   className={theme === 'dark' ? 'mt-1 block w-full bg-[#0d1117] border border-[#30363d] rounded-md shadow-sm py-2 px-3 text-white' : 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3'}
                 >
                   <option value="info">Info</option>
-                  <option value="minor">Minor</option>
-                  <option value="major">Major</option>
-                  <option value="critical">Critical</option>
+                  <option value="minor">Degraded Performance</option>
+                  <option value="major">Partial Outage</option>
+                  <option value="critical">Major Outage</option>
                 </select>
               </div>
               <div>

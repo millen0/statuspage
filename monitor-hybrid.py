@@ -171,7 +171,7 @@ def create_or_update_incident(conn, service_id, name, new_status, error_message=
         existing = cur.fetchone()
         if not existing:
             # Criar novo incidente
-            severity = 'critical' if new_status == 'outage' else 'major'
+            severity = 'critical' if new_status == 'outage' else 'minor'
             title = f"{name} - {'Service Outage' if new_status == 'outage' else 'Performance Degraded'}"
             description = error_message or f"Automated detection: {name} is {new_status}"
             
