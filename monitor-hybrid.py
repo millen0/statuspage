@@ -39,10 +39,12 @@ DB_CONFIG = {
 
 SLACK_WEBHOOK = os.getenv('SLACK_WEBHOOK', '')
 STATE_FILE = "monitor-state.json"
+LAST_CHECK_FILE = "monitor-last-check.json"
 
 # Configurações padrão
 DEFAULT_REQUEST_TIMEOUT = 10
 DEFAULT_RETRIES = 1
+DEFAULT_HEARTBEAT_INTERVAL = 60
 TCP_PORT = 80
 
 def get_db_connection():
@@ -63,6 +65,24 @@ def load_state():
     except:
         pass
     return {}
+
+def load_last_check():
+    """Carrega timestamp da última checagem de cada serviço"""
+    try:
+        if os.path.exists(LAST_CHECK_FILE):
+            with open(LAST_CHECK_FILE, 'r') as f:
+                return json.load(f)
+    except:
+        pass
+    return {}
+
+def save_last_check(last_check):
+    """Salva timestamp da última checagem"""
+    try:
+        with open(LAST_CHECK_FILE, 'w') as f:
+            json.dump(last_check, f, indent=2)
+    except Exception as e:
+        print(f"   → Failed to save last check: {e}")
 
 def save_state(state):
     """Salva estado atual dos serviços"""
@@ -236,8 +256,7 @@ def check_service(service_id, name, url, timeout, retries, previous_state):
                 
                 # Status Logic:
                 # 200-299 ou 400-499 = Operational (não é downtime)
-                # 500-599 = Degraded (é downtime)
-                # Outros = Degraded (é downtime)
+                # 500-599 = Degraded (é downtime, mas tenta retry)
                 if 200 <= status_code <= 299:
                     print(f"   ✅ Status {status_code} (Operational)")
                     success = True
@@ -247,19 +266,30 @@ def check_service(service_id, name, url, timeout, retries, previous_state):
                     success = True
                     break
                 elif status_code >= 500:
-                    # 500-599 = Degraded
-                    print(f"   🟡 Status {status_code} (Degraded Performance)")
-                    success = False
-                    is_degraded = True
+                    # 500-599 = Tentar retry antes de considerar degraded
                     error = f"HTTP {status_code}"
-                    break
+                    if attempt < retries:
+                        print(f"   🟡 Status {status_code} - Attempt {attempt}/{retries}, retrying...")
+                        time.sleep(2)
+                        continue
+                    else:
+                        # Após todos os retries, considerar degraded
+                        print(f"   🟡 Status {status_code} (Degraded after {retries} retries)")
+                        success = False
+                        is_degraded = True
+                        break
                 else:
-                    # Outros códigos = Degraded
-                    print(f"   🟡 Status {status_code} (Degraded)")
-                    success = False
-                    is_degraded = True
+                    # Outros códigos = Tentar retry
                     error = f"HTTP {status_code}"
-                    break
+                    if attempt < retries:
+                        print(f"   🟡 Status {status_code} - Attempt {attempt}/{retries}, retrying...")
+                        time.sleep(2)
+                        continue
+                    else:
+                        print(f"   🟡 Status {status_code} (Degraded after {retries} retries)")
+                        success = False
+                        is_degraded = True
+                        break
             
         except Exception as e:
             error = str(e)
@@ -305,7 +335,7 @@ def monitor_services():
         
         # Buscar serviços com URL
         cur.execute("""
-            SELECT id, name, url, status, request_timeout, retries
+            SELECT id, name, url, status, heartbeat_interval, request_timeout, retries
             FROM services 
             WHERE url IS NOT NULL AND url != ''
             ORDER BY position
@@ -314,13 +344,31 @@ def monitor_services():
         services = cur.fetchall()
         failed = []
         
+        # Carregar última checagem
+        last_check = load_last_check()
+        current_time = time.time()
+        
         for service in services:
             service_id = service['id']
             name = service['name']
             url = service['url']
             current_status = service['status']
+            heartbeat_interval = service['heartbeat_interval'] or DEFAULT_HEARTBEAT_INTERVAL
             timeout = service['request_timeout'] or DEFAULT_REQUEST_TIMEOUT
             retries = service['retries'] or DEFAULT_RETRIES
+            
+            # Verificar se já passou tempo suficiente desde última checagem
+            service_key = str(service_id)
+            last_check_time = last_check.get(service_key, 0)
+            time_since_last_check = current_time - last_check_time
+            
+            if time_since_last_check < heartbeat_interval:
+                print(f"⏭️  {name}")
+                print(f"   Skipping: Last check was {int(time_since_last_check)}s ago (interval: {heartbeat_interval}s)\n")
+                continue
+            
+            # Atualizar timestamp da última checagem
+            last_check[service_key] = current_time
             
             # Verificar status com retries
             new_status, status_code, error = check_service(
@@ -365,8 +413,9 @@ def monitor_services():
     finally:
         conn.close()
     
-    # Salvar estado atual
+    # Salvar estado atual e última checagem
     save_state(current_state)
+    save_last_check(last_check)
     
     print(f"{'='*60}")
     print(f"Total: {len(services)} | Failed: {len(failed)}")
